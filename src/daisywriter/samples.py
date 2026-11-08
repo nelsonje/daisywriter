@@ -144,7 +144,7 @@ def make_template(path: str | Path, markers: bool = False) -> Path:
              "to tell you that the machine has been inspected, cleaned, and adjusted in our shop, "
              "and that it left here today by parcel post.", WD_ALIGN_PARAGRAPH.JUSTIFY)
     body.append(p)
-    p = para("Your invoice total is {{Amount:$#,##0.00}}. Please note that the machine comes "
+    p = para("Your invoice total is {{Amount}}. Please note that the machine comes "
              "with a ")
     p.add_run("fabric").bold = True
     p.add_run(" ribbon; carbon film ribbons are ")
@@ -198,7 +198,10 @@ def make_data(path: str | Path, rows=None, headers=None) -> Path:
                 cell.number_format = "@"
         if header == "OrderDate":
             for cell in ws[letter][1:]:
-                cell.number_format = "yyyy-mm-dd"
+                cell.number_format = "m/d/yyyy"
+        if header == "Amount":
+            for cell in ws[letter][1:]:
+                cell.number_format = '"$"#,##0.00'
     wb.save(str(path))
     return path
 

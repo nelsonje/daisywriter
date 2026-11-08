@@ -41,7 +41,10 @@ def _merge_args(p: argparse.ArgumentParser):
     p.add_argument("--sheet", help="worksheet name (default: the first sheet)")
     p.add_argument("--today", type=_date_arg, help="date used for {{Today}} and DATE fields")
     p.add_argument("--date-format", default=DEFAULT_DATE,
-                   help=f"default date format (default: \"{DEFAULT_DATE}\")")
+                   help=f"date format for {{{{Today}}}} and dates Excel shows as General "
+                        f"(default: \"{DEFAULT_DATE}\")")
+    p.add_argument("--ignore-excel-formats", action="store_true",
+                   help="don't show values as formatted in Excel (template formats still apply)")
     p.add_argument("--stock", choices=sorted(STOCKS), default="letter", help="paper size")
     p.add_argument("--top", type=int, default=6, help="lines fed before the first typed line")
     p.add_argument("--bottom", type=int, default=6, help="lines left blank at the page bottom")
@@ -59,7 +62,8 @@ def _settings(a) -> Settings:
                      a.page_number_align, a.page_number_format)
     layout = LayoutSettings(stock=a.stock, top_lines=a.top, bottom_lines=a.bottom,
                             justify=not a.no_justify, page_numbers=pn)
-    merge = MergeSettings(today=a.today or dt.date.today(), default_date=a.date_format)
+    merge = MergeSettings(today=a.today or dt.date.today(), default_date=a.date_format,
+                          excel_formats=not a.ignore_excel_formats)
     return Settings(profile=a.profile, sheet=a.sheet, merge=merge, layout=layout)
 
 

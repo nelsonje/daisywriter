@@ -112,10 +112,22 @@ def apply_case(text: str, case: str | None) -> str:
     return text
 
 
-def format_value(value, ref: FieldRef, default_date: str = DEFAULT_DATE) -> tuple[str, str | None]:
-    """Return (text, problem). problem is a message when the picture didn't fit the value."""
+def format_value(value, ref: FieldRef, default_date: str = DEFAULT_DATE,
+                 excel_format: str | None = None) -> tuple[str, str | None]:
+    """Return (text, problem). problem is a message when the picture didn't fit the value.
+
+    A format in the template wins; otherwise the value is shown as Excel shows it
+    (excel_format); otherwise numbers print plainly and dates as default_date.
+    """
     problem = None
     pic = ref.picture
+    if not pic and excel_format:
+        from .excelfmt import format_excel  # excelfmt imports month names from here
+
+        shown = format_excel(value, excel_format)
+        if shown is not None:
+            text = apply_case(shown, ref.case)
+            return (ref.before + text + ref.after if text else text), None
     date_pic = pic if pic and (ref.kind == "date" or (ref.kind is None and is_date_picture(pic))) else None
     num_pic = pic if pic and not date_pic and ref.kind != "date" else None
 

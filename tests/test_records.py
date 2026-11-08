@@ -57,3 +57,16 @@ def test_sheet_selection(tmp_path):
 def test_headers_only(tmp_path):
     ds = load_records(make_data(tmp_path / "d.xlsx", rows=[]))
     assert any("no data rows" in i.message for i in ds.issues)
+
+
+def test_zip_with_zip_code_format_is_fine(tmp_path):
+    path = tmp_path / "z.xlsx"
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.append(["Zip"])
+    ws.append([2134])
+    ws["A2"].number_format = "00000"  # Excel's Special > Zip Code
+    wb.save(str(path))
+    ds = load_records(path)
+    assert not ds.issues
+    assert ds.records[0].formats == {"Zip": "00000"}

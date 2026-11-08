@@ -16,7 +16,8 @@ from .values import DEFAULT_DATE, format_value
 @dataclass
 class MergeSettings:
     today: dt.date = field(default_factory=dt.date.today)
-    default_date: str = DEFAULT_DATE
+    default_date: str = DEFAULT_DATE  # for {{Today}}, and values Excel shows as General
+    excel_formats: bool = True  # show values as formatted in Excel unless the template says otherwise
 
 
 @dataclass
@@ -45,7 +46,8 @@ def resolve(ref: FieldRef, record: Record, dataset: DataSet,
         if normalize(ref.name) == "today":
             return format_value(settings.today, ref, settings.default_date)
         return None, None
-    return format_value(record.values.get(header), ref, settings.default_date)
+    excel_format = record.formats.get(header) if settings.excel_formats else None
+    return format_value(record.values.get(header), ref, settings.default_date, excel_format)
 
 
 def merge_text(text: str, record: Record, dataset: DataSet, settings: MergeSettings) -> str:

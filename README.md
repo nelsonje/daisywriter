@@ -25,9 +25,12 @@ Useful options: `--profile olympia-compact-2`, `--today 2026-11-08`,
 ## Writing a template
 - Merge fields: Word's own **Insert Merge Field**, or typed `{{FieldName}}` / `«FieldName»`.
   Field names match column headers ignoring case, spaces and underscores.
-- Formats: `{{OrderDate:MMMM d, yyyy}}`, `{{Amount:$#,##0.00}}`, `{{LastName:Upper}}`,
-  or Word field switches (`\@`, `\#`, `\*`). Dates default to "November 8, 2026".
-  `{{Today}}` or a Word DATE field gives the print date.
+- Values are typed **as they appear in Excel**: format the column in Excel (Currency, Date,
+  Zip Code, ...) and the letter follows. No formatting in the template is needed.
+- Optionally, a format in the template overrides Excel's: `{{OrderDate:MMMM d, yyyy}}`,
+  `{{Amount:$#,##0.00}}`, or Word field switches (`\@`, `\#`). `{{LastName:Upper}}` changes
+  case. `--ignore-excel-formats` turns Excel formats off.
+- `{{Today}}` or a Word DATE field gives the print date ("November 8, 2026" unless formatted).
 - Bold, underline, alignment (including justify), and indents are typed; fonts and sizes are
   ignored. Lines are re-wrapped to the typewriter's margins; only paragraph breaks and
   Shift+Enter line breaks are kept.

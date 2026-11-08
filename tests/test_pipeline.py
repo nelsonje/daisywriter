@@ -86,3 +86,31 @@ def test_profiles_load():
     p = load_profile("olympia-compact-2")
     assert p.charset["©"] == b"\x0e-\x0f"
     assert not p.can_type("<") and p.can_type("±")
+
+
+def _format_letter(tmp_path, settings, text):
+    d = docx.Document()
+    d.add_paragraph(text)
+    d.save(str(tmp_path / "f.docx"))
+    m = run(tmp_path / "f.docx", samples.make_data(tmp_path / "d.xlsx"), settings)
+    return texts(m.letters[0])[0]
+
+
+def test_values_show_as_formatted_in_excel(tmp_path, settings):
+    # the sample sheet formats OrderDate as m/d/yyyy and Amount as "$"#,##0.00
+    assert _format_letter(tmp_path, settings, "{{OrderDate}} {{Amount}}") == "10/14/2026 $89.50"
+
+
+def test_template_format_overrides_excel(tmp_path, settings):
+    assert _format_letter(tmp_path, settings, "{{OrderDate:MMMM d, yyyy}} {{Amount:0.0}}") == \
+        "October 14, 2026 89.5"
+
+
+def test_excel_formats_can_be_ignored(tmp_path, settings):
+    settings.merge.excel_formats = False
+    assert _format_letter(tmp_path, settings, "{{OrderDate}} {{Amount}}") == "October 14, 2026 89.5"
+
+
+def test_case_switch_applies_to_excel_formatted_text(tmp_path, settings):
+    assert _format_letter(tmp_path, settings, "{{OrderDate:Upper}}") == "10/14/2026"
+    assert _format_letter(tmp_path, settings, "{{LastName:Upper}}") == "WHITFIELD"

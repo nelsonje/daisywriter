@@ -10,6 +10,7 @@ import openpyxl
 from openpyxl.utils import get_column_letter
 
 from . import issues as I
+from .excelfmt import format_excel
 
 ZIP_HEADER = re.compile(r"^(zip|zipcode|postal|postalcode|postcode|zip\+4)$")
 
@@ -27,6 +28,7 @@ def normalize(name: str) -> str:
 class Record:
     row: int  # Excel row number
     values: dict[str, object]  # header -> raw cell value
+    formats: dict[str, str] = field(default_factory=dict)  # header -> Excel number format
 
 
 @dataclass
@@ -70,15 +72,18 @@ def load_records(path: str | Path, sheet: str | None = None) -> DataSet:
             raise ValueError(f"{path.name} has no sheet named {sheet!r} "
                              f"(sheets: {', '.join(values_wb.sheetnames)})")
         name = sheet or values_wb.sheetnames[0]
-        rows = list(values_wb[name].iter_rows(values_only=True))
+        cells = [[(c.value, getattr(c, "number_format", None)) for c in row]
+                 for row in values_wb[name].iter_rows()]
         formula_rows = list(formulas_wb[name].iter_rows(values_only=True))
     finally:
         values_wb.close()
         formulas_wb.close()
-    return _build(str(path), name, rows, formula_rows)
+    rows = [[v for v, _ in row] for row in cells]
+    formats = [[f for _, f in row] for row in cells]
+    return _build(str(path), name, rows, formula_rows, formats)
 
 
-def _build(path, sheet, rows, formula_rows) -> DataSet:
+def _build(path, sheet, rows, formula_rows, formats=None) -> DataSet:
     issues: list[I.Issue] = []
     if not rows:
         return DataSet(path, sheet, [], [], [I.error(f"sheet {sheet!r} is empty", "data")])
@@ -108,9 +113,13 @@ def _build(path, sheet, rows, formula_rows) -> DataSet:
     for r, row in enumerate(rows[1:], start=2):
         if all(v is None or (isinstance(v, str) and not v.strip()) for v in row):
             continue
-        values = {}
+        values, fmts = {}, {}
+        frow_fmt = formats[r - 1] if formats and r - 1 < len(formats) else ()
         for c, h in columns:
             v = row[c] if c < len(row) else None
+            fmt = frow_fmt[c] if c < len(frow_fmt) else None
+            if fmt and fmt != "General":
+                fmts[h] = fmt
             if v is None:
                 frow = formula_rows[r - 1] if r - 1 < len(formula_rows) else ()
                 f = frow[c] if c < len(frow) else None
@@ -118,13 +127,15 @@ def _build(path, sheet, rows, formula_rows) -> DataSet:
                     issues.append(I.error(
                         f"cell {get_column_letter(c + 1)}{r} has a formula with no saved result; "
                         "open the file in Excel and save it", "data"))
+            shown = format_excel(v, fmt) or ""
             if isinstance(v, (int, float)) and not isinstance(v, bool) and ZIP_HEADER.match(
-                    normalize(h)) and 0 <= v < 10000:
+                    normalize(h)) and 0 <= v < 10000 and len(shown) < 5:
                 issues.append(I.warning(
                     f"cell {get_column_letter(c + 1)}{r}: ZIP {int(v)} is stored as a number, so a "
-                    "leading zero may be lost; format the column as Text in Excel", "data"))
+                    "leading zero may be lost; give the column Excel's Special > Zip Code format",
+                    "data"))
             values[h] = v
-        records.append(Record(r, values))
+        records.append(Record(r, values, fmts))
     if not records and columns:
         issues.append(I.error("there are no data rows under the headers", "data"))
     return DataSet(path, sheet, [h for _, h in columns], records, issues)

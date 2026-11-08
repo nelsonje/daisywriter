@@ -18,11 +18,11 @@ Letter 1 of 5 · row 2 · Eleanor Whitfield · page 1 of 1
   │Dear Eleanor,                                                   │
   │                                                                │
 ┃ │     Thank you for ordering the Smith-Corona Galaxie 12 on      │
-┃ │October 14, 2026. We are pleased to tell you that the machine   │
-┃ │has been inspected, cleaned, and adjusted in our shop, and that │
-┃ │it left here today by parcel post.                              │
+┃ │10/14/2026. We are pleased to tell you that the machine has been│
+┃ │inspected, cleaned, and adjusted in our shop, and that it left  │
+┃ │here today by parcel post.                                      │
   │                                                                │
-┃ │     Your invoice total is 89.5. Please note that the machine   │
+┃ │     Your invoice total is $89.50. Please note that the machine │
 ┃ │comes with a fabric ribbon; carbon film ribbons are not         │
   │                                                    ‾‾‾         │
 ┃ │compatible with this model.                                     │
@@ -65,12 +65,12 @@ Letter 2 of 5 · row 3 · Thomas O'Brien · page 1 of 1
   │                                                                │
   │Dear Thomas,                                                    │
   │                                                                │
-┃ │     Thank you for ordering the Olympia SM9 on October 20, 2026.│
-┃ │We are pleased to tell you that the machine has been inspected, │
+┃ │     Thank you for ordering the Olympia SM9 on 10/20/2026. We   │
+┃ │are pleased to tell you that the machine has been inspected,    │
 ┃ │cleaned, and adjusted in our shop, and that it left here today  │
 ┃ │by parcel post.                                                 │
   │                                                                │
-┃ │     Your invoice total is 125. Please note that the machine    │
+┃ │     Your invoice total is $125.00. Please note that the machine│
 ┃ │comes with a fabric ribbon; carbon film ribbons are not         │
   │                                                    ‾‾‾         │
 ┃ │compatible with this model.                                     │
@@ -115,12 +115,12 @@ Letter 3 of 5 · row 4 · José Álvarez · page 1 of 1
   │                                                                │
   │Dear Jose,                                                      │
   │                                                                │
-┃ │     Thank you for ordering the Hermes 3000 on October 27, 2026.│
-┃ │We are pleased to tell you that the machine has been inspected, │
+┃ │     Thank you for ordering the Hermes 3000 on 10/27/2026. We   │
+┃ │are pleased to tell you that the machine has been inspected,    │
 ┃ │cleaned, and adjusted in our shop, and that it left here today  │
 ┃ │by parcel post.                                                 │
   │                                                                │
-┃ │     Your invoice total is 148.75. Please note that the machine │
+┃ │     Your invoice total is $148.75. Please note that the machine│
 ┃ │comes with a fabric ribbon; carbon film ribbons are not         │
   │                                                    ‾‾‾         │
 ┃ │compatible with this model.                                     │
@@ -164,12 +164,12 @@ Letter 4 of 5 · row 5 · Priya Raman · page 1 of 1
   │                                                                │
   │Dear Priya,                                                     │
   │                                                                │
-┃ │     Thank you for ordering the IBM Selectric II on November 2, │
-┃ │2026. We are pleased to tell you that the machine has been      │
-┃ │inspected, cleaned, and adjusted in our shop, and that it left  │
-┃ │here today by parcel post.                                      │
+┃ │     Thank you for ordering the IBM Selectric II on 11/2/2026.  │
+┃ │We are pleased to tell you that the machine has been inspected, │
+┃ │cleaned, and adjusted in our shop, and that it left here today  │
+┃ │by parcel post.                                                 │
   │                                                                │
-┃ │     Your invoice total is 210. Please note that the machine    │
+┃ │     Your invoice total is $210.00. Please note that the machine│
 ┃ │comes with a fabric ribbon; carbon film ribbons are not         │
   │                                                    ‾‾‾         │
 ┃ │compatible with this model.                                     │
@@ -214,11 +214,11 @@ Letter 5 of 5 · row 6 · Walter Kowalczyk · page 1 of 1
   │Dear Walter,                                                    │
   │                                                                │
 ┃ │     Thank you for ordering the Brother Correctronic 50 on      │
-┃ │November 3, 2026. We are pleased to tell you that the machine   │
-┃ │has been inspected, cleaned, and adjusted in our shop, and that │
-┃ │it left here today by parcel post.                              │
+┃ │11/3/2026. We are pleased to tell you that the machine has been │
+┃ │inspected, cleaned, and adjusted in our shop, and that it left  │
+┃ │here today by parcel post.                                      │
   │                                                                │
-┃ │     Your invoice total is 64.25. Please note that the machine  │
+┃ │     Your invoice total is $64.25. Please note that the machine │
 ┃ │comes with a fabric ribbon; carbon film ribbons are not         │
   │                                                    ‾‾‾         │
 ┃ │compatible with this model.                                     │
