@@ -5,13 +5,21 @@ name = "Olympia Compact 2 (US 356-U wheel)"
 transport = "usb_printer"
 usb = { vid = 0x067B, pid = 0x2305 }
 paper = "single_sheet"        # or "continuous"
+# Loading a sheet: insert it until the rollers above the printing point catch it.
+# The printing point is then this many lines below the top edge (measured
+# on the Swintec, which shares the mechanism; check with a test page).
+load_offset_lines = 4
+# After the bottom edge reaches the printing point, feed this much more so the
+# sheet clears those rollers.
+eject_extra_lines = 3
 
 pitch_cpi = 10                # slide switch, or ESC P / E / M = 10 / 12 / 15
 lines_per_inch = 6            # slide switch, or ESC 6 / 4 / 3
 # Margins are set on the keyboard (no escape codes). Power-on defaults are 10 and 75.
 margins = { left = 10, right = 75 }
-# Columns kept clear before the right margin: a character landing on the right
-# margin makes the firmware wrap, possibly mid-word.
+# Columns kept clear before the right margin; past it the firmware wraps,
+# possibly mid-word. The Swintec (same firmware family) measured 0; keep 1 here
+# until `daisywriter testpage margins` has been run on this machine.
 right_guard = 1
 
 # Phase 2 (output), recorded here so profiles stay complete.

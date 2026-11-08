@@ -6,13 +6,24 @@ name = "Swintec 1146 CMP"
 transport = "usb_printer"
 usb = { vid = 0x067B, pid = 0x2305 }
 paper = "single_sheet"
+# Loading a sheet: insert it until the rollers above the printing point catch it.
+# The printing point is then this many lines below the top edge (measured
+# 2026-11-08: the first line printed 2 lines lower than the 6-line top margin).
+load_offset_lines = 4
+# After the bottom edge reaches the printing point, feed this much more so the
+# sheet clears those rollers.
+eject_extra_lines = 3
 
 pitch_cpi = 10
 lines_per_inch = 6
 margins = { left = 10, right = 75 }
-right_guard = 1
+# Measured 2026-11-08 with `daisywriter testpage margins`: 66 characters fit at
+# 10/75 and the 67th wraps, so no safety column is needed.
+right_guard = 0
 
 newline = "\n"
+# Overstrike bold is only slightly bolder with a carbon film ribbon (each strike
+# uses fresh film); clearly bolder with a fabric ribbon. Underline overprint is good.
 bold = "overstrike"
 underline = "overprint"
 line_pause_s = 0.0

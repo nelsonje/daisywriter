@@ -10,6 +10,7 @@ requires-python = ">=3.12"
 dependencies = [
     "openpyxl>=3.1.5",
     "python-docx>=1.2.0",
+    "pyusb>=1.2 ; sys_platform != 'win32'",
 ]
 
 [project.scripts]

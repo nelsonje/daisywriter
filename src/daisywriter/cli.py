@@ -11,7 +11,8 @@ from .layout import LayoutSettings, PageNumbers
 from .merge import MergeSettings
 from .pipeline import Merge, Settings, run
 from .preview import render_html, render_text
-from .profile import STOCKS, builtin_profiles
+from .profile import STOCKS, builtin_profiles, load_profile
+from .transports import TransportError
 from .values import DEFAULT_DATE
 
 
@@ -119,6 +120,108 @@ def cmd_preview(a) -> int:
     return 1 if errors else 0
 
 
+def _ask(message: str) -> bool:
+    try:
+        answer = input(f"{message} [Enter = yes, q = quit] ")
+    except EOFError:
+        return False
+    return answer.strip().lower() not in ("q", "quit", "n", "no")
+
+
+def _print_args(p: argparse.ArgumentParser, merge: bool):
+    if not merge:
+        p.add_argument("--profile", help="typewriter profile id or .toml path (see 'profiles')")
+        p.add_argument("--top", type=int, default=6, help="lines fed before the first typed line")
+    p.add_argument("--dry-run", metavar="FILE", help="write the bytes to FILE instead of printing")
+    p.add_argument("--no-eject", action="store_true",
+                   help="don't feed single sheets out after the last line")
+    p.add_argument("--line-pause", type=float, metavar="S",
+                   help="pause S seconds after each line (default from the profile)")
+    p.add_argument("--paper", choices=["single_sheet", "continuous"],
+                   help="paper handling (default from the profile)")
+    p.add_argument("-y", "--yes", action="store_true", help="don't prompt for paper")
+
+
+def _open(profile, a):
+    from .transports import open_transport
+    try:
+        t = open_transport(profile, a.dry_run)
+    except TransportError as e:
+        sys.exit(f"daisywriter: {e}")
+    st = t.status()
+    if st is not None:
+        print(f"{t.name}: {st.explain()} (status {st.raw:#04x})")
+    return t
+
+
+def _send(t, letters, profile, opts, a) -> int:
+    from .job import PrintCancelled, print_letters
+    ask = (lambda message: True) if a.yes else _ask
+    try:
+        done = print_letters(t, letters, profile, opts, ask)
+    except PrintCancelled:
+        print("cancelled")
+        return 1
+    except KeyboardInterrupt:
+        print("\nstopped (the typewriter may finish the line it already has)")
+        return 1
+    except TransportError as e:
+        print(f"daisywriter: {e}")
+        return 1
+    finally:
+        t.close()
+    print(f"done: {len(done)} letter(s) sent" + (f" to {a.dry_run}" if a.dry_run else ""))
+    return 0
+
+
+def _options(profile, a, top):
+    from .job import PrintOptions
+    return PrintOptions.for_profile(profile, top_lines=top, eject=not a.no_eject,
+                                    line_pause_s=a.line_pause, paper=a.paper,
+                                    stock=getattr(a, "stock", None))
+
+
+def cmd_print(a) -> int:
+    m = _run(a)
+    letters = m.letters
+    if a.letters:
+        letters = [x for x in letters if x.number in a.letters]
+        if not letters:
+            sys.exit(f"daisywriter: no such letters (there are {len(m.letters)})")
+    if not m.ok and not a.force:
+        _print_issues(m, False)
+        print("not printing because of the errors above (--force prints anyway)")
+        return 1
+    opts = _options(m.profile, a, a.top)
+    t = _open(m.profile, a)
+    return _send(t, letters, m.profile, opts, a)
+
+
+def cmd_status(a) -> int:
+    profile = load_profile(a.profile)
+    a.dry_run = None
+    t = _open(profile, a)
+    t.close()
+    return 0
+
+
+def cmd_testpage(a) -> int:
+    from .layout import Line, Page
+    from .merge import Letter
+    from .records import Record
+    from .testpage import PAGES
+    profile = load_profile(a.profile)
+    lines: list[Line] = []
+    for name in a.patterns:
+        if lines:
+            lines += [Line(), Line()]
+        lines += PAGES[name](profile).lines
+    letter = Letter(0, Record(0, {}), [], pages=[Page(1, lines)])
+    opts = _options(profile, a, a.top)
+    t = _open(profile, a)
+    return _send(t, [letter], profile, opts, a)
+
+
 def cmd_profiles(a) -> int:
     for pid, p in builtin_profiles().items():
         print(f"{pid:22} {p.name}: {p.pitch_cpi} cpi, {p.lines_per_inch} lpi, margins "
@@ -149,6 +252,22 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--format", choices=["auto", "plain", "ansi", "html"], default="auto")
     p.add_argument("-o", "--output", type=Path, help="write to a file (.html for HTML)")
     p.set_defaults(func=cmd_preview)
+
+    p = sub.add_parser("print", help="type the merged letters")
+    _merge_args(p)
+    _print_args(p, merge=True)
+    p.add_argument("--letters", type=_letters_arg, help="letters to print, e.g. 1,3-5")
+    p.add_argument("--force", action="store_true", help="print even if validation found errors")
+    p.set_defaults(func=cmd_print)
+
+    p = sub.add_parser("status", help="show whether the typewriter is connected and ready")
+    p.add_argument("--profile", help="typewriter profile id or .toml path")
+    p.set_defaults(func=cmd_status)
+
+    p = sub.add_parser("testpage", help="type calibration patterns (margins, format, charset)")
+    p.add_argument("patterns", nargs="+", choices=["margins", "format", "charset"])
+    _print_args(p, merge=False)
+    p.set_defaults(func=cmd_testpage)
 
     p = sub.add_parser("profiles", help="list built-in typewriter profiles")
     p.set_defaults(func=cmd_profiles)

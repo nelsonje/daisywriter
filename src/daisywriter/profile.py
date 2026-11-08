@@ -45,14 +45,21 @@ class Profile:
     margin_right: int
     right_guard: int = 1
     paper: str = "single_sheet"
+    load_offset_lines: int = 0  # printing point below the sheet's top edge once it's loaded
+    eject_extra_lines: int = 0  # extra feed after the bottom edge reaches the printing point
     unavailable: frozenset[str] = frozenset()
     charset: dict[str, bytes] = field(default_factory=dict)
     raw: dict = field(default_factory=dict, compare=False)
 
     @property
     def line_width(self) -> int:
-        """Columns available for text between the margins."""
-        return self.margin_right - self.margin_left - self.right_guard
+        """Columns available for text between the margins.
+
+        Measured on the Swintec 1146 CMP (testpage margins): with margins 10/75 a
+        66-character line fits and a 67th character wraps, so the right-margin
+        column itself is usable.
+        """
+        return self.margin_right - self.margin_left + 1 - self.right_guard
 
     @property
     def line_pt(self) -> float:
@@ -104,6 +111,8 @@ def _from_toml(pid: str, data: dict) -> Profile:
         margin_right=int(margins.get("right", 75)),
         right_guard=int(data.get("right_guard", 1)),
         paper=data.get("paper", "single_sheet"),
+        load_offset_lines=int(data.get("load_offset_lines", 0)),
+        eject_extra_lines=int(data.get("eject_extra_lines", 0)),
         unavailable=frozenset(data.get("unavailable", "")),
         charset={k: v.encode("latin-1") for k, v in data.get("charset", {}).items()},
         raw=data,

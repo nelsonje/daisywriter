@@ -13,7 +13,7 @@ from daisywriter.layout import (
 from daisywriter.model import Align, Paragraph, Role, Span
 from daisywriter.profile import load_profile
 
-PROFILE = load_profile("swintec-1146cmp")  # 10 cpi, 6 lpi, 64 columns
+PROFILE = load_profile("swintec-1146cmp")  # 10 cpi, 6 lpi, 66 columns
 W = PROFILE.line_width
 
 
@@ -30,7 +30,7 @@ WORDS = ("The quick brown fox jumps over the lazy dog and keeps running far beyo
 
 
 def test_width():
-    assert W == 64
+    assert W == 66  # margins 10/75, measured: the right-margin column is usable
 
 
 def test_wrap_left():
@@ -81,10 +81,10 @@ def test_tabs():
 
 
 def test_hyphen_break_and_overlong_word():
-    out, _ = lines("x" * 57 + " well-known")
-    assert out == ["x" * 57 + " well-", "known"]
+    out, _ = lines("x" * 59 + " well-known")
+    assert out == ["x" * 59 + " well-", "known"]
     out, issues = lines("y" * 70)
-    assert out == ["y" * 64, "y" * 6]
+    assert out == ["y" * 66, "y" * 4]
     assert issues and "longer than the line" in issues[0].message
 
 
