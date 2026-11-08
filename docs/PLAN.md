@@ -1,0 +1,216 @@
+# daisywriter: plan
+
+> Living design doc: refine it here as decisions change.
+
+## 1. Goal
+daisywriter is a Windows desktop app (it also runs on macOS for development) that does **mail merge onto a daisywheel typewriter**:
+1. The user picks a **Word template** (.docx) and an **Excel data file** (.xlsx, first row = headers).
+2. The app **validates** that the merge can be done and reports clear, actionable problems.
+3. It produces a **list of merged letters** with a typewriter-accurate preview.
+4. The user **prints all letters in sequence**, or **selects individual letters to print or reprint**.
+5. Optionally, it adds **simulated typing errors with strikeover corrections**, only in the letter body. The body is auto-detected, or set with explicit `{{body}} … {{/body}}` markers.
+6. Paragraphs are **re-wrapped** to the typewriter's margins and pitch. Word's own line breaks are ignored, and only paragraph breaks and explicit manual line breaks are kept.
+
+The typewriter connects through a USB printer-class parallel adapter (e.g. a PL2305, 067b:2305), which the app drives **directly, not through Windows print queues**. That's the same approach as `../olympia-compact-electronic-2/cmpprint.py`.
+
+## 2. Decisions made so far
+| Topic | Decision |
+|---|---|
+| Shape | Core library + CLI first, then a GUI on the same library |
+| Distribution | MSI installer (PyInstaller onedir + WiX v5), built in GitHub Actions on Windows |
+| Device access | Windows: ctypes against inbox `usbprint.sys` (no driver install). macOS/Linux: pyusb/libusb. |
+| Merge tags | **Both** real Word `MERGEFIELD`s and plain-text placeholders (`{{Name}}` and typed `«Name»`) |
+| Error zone | **Auto-detected** from letter structure (salutation → closing). Optional explicit `{{body}} … {{/body}}` markers override it. |
+| Correction style | **Strikeover**, selectable as x-out / overstrike-in-place / **mix (default)** |
+| Machines | **Profile-driven** from day one, with several typewriters described in TOML |
+| Word headers/footers | **Ignored** (letterhead assumed pre-printed); only the document body is typed |
+| Paper feed | **Per profile**: `single_sheet` (prompt before each page) or `continuous` (FF, no pause) |
+| Indents | **Kept**, converted to whole columns (left, first-line, hanging) |
+
+## 3. Stack
+- **Python 3.12**, **uv**, `src/` layout, pytest, ruff
+- **python-docx** for paragraphs, runs, alignment, bold/underline, and headers/footers, plus our own walker over the raw XML for merge fields
+- **openpyxl** (`read_only=True, data_only=True`) to read the Excel records
+- **PySide6** for the GUI
+- **pyusb** (non-Windows only) and **ctypes** (Windows) for the transports
+- **PyInstaller** + **WiX Toolset v5** for the MSI, built and published by GitHub Actions
+
+## 4. Pipeline / architecture
+```
+.docx ──► template.py ──► Template (paragraph model + fields + regions)
+.xlsx ──► records.py  ──► list[Record] (header → display string)
+                │
+        validate.py  (template × records × profile → Issues)
+                │
+          merge.py  ──► MergedLetter (paragraphs with field values substituted)
+                │
+         errors.py  ──► (optional) inject typos + strikeover corrections in body spans, seeded
+                │
+         layout.py  ──► Pages → Lines → Cells (char, bold, underline, overstrike)
+                │
+        render.py   ──► bytes per page, via the Profile (charset map, bold/underline method, newlines)
+                │
+  transports/*  +  job.py  ──► typewriter (line chunking, timeouts, status, paper prompts)
+```
+
+```
+src/daisywriter/
+  model.py          # Span(text, bold, underline, field=None, region), Paragraph(align, spans, kind)
+  template.py       # docx → Template; MERGEFIELD + placeholder parsing
+  region.py         # paragraph roles: explicit {{body}} markers, else salutation→closing auto-detect
+  records.py        # xlsx → records; header normalization; cell → string formatting
+  validate.py       # Issue(level, where, message); all checks in §6
+  merge.py          # Template + Record → MergedLetter
+  errors.py         # typing-error injection (seeded RNG, QWERTY-neighbor model)
+  layout.py         # re-wrap + alignment + pagination → Page/Line/Cell grid
+  render.py         # Page → bytes per Profile; also → preview text/HTML
+  profiles/         # *.toml + loader (dataclass)
+  transports/       # base.py, pyusb.py, usbprint.py (Windows), file.py (dry-run)
+  job.py            # send loop: chunk after LF/FF, per-line timeout, line pause, progress + pause-for-paper callbacks
+  session.py        # a merge run: letters, print status per letter, seeds; saved as JSON next to the data file
+  cli.py            # validate | preview | print [--letters 1,4-6] | status | init | test
+  gui/              # PySide6 app (phase 3)
+tests/fixtures/     # sample .docx/.xlsx, golden layouts and golden byte streams
+```
+
+## 5. Reading the Word template (`template.py`)
+- Walk each `w:p` in the document body in document order. Section headers and footers are ignored, and a template that has them gets an info message. Build `Span`s from runs. Each span has text, **bold**, **underline**, and the effective formatting, where style inheritance is resolved through python-docx (`run.bold` is `None`, so fall back to the paragraph/character style).
+- **Real merge fields:**
+  - Handle `w:fldSimple` with `MERGEFIELD Name`, and complex fields (`w:fldChar begin` → `w:instrText` → `separate` → result runs → `end`).
+  - A MERGEFIELD becomes `Span(field="Name")` and takes the formatting of its result run. Field switches (`\* Upper`, `\* Caps`, `\@ "MMMM d, yyyy"`, `\# "0.00"`) are parsed, and the common ones are supported.
+  - Other fields (`DATE`, `NEXT`, `IF`, `SKIPIF`) produce a validation issue. `DATE` may be supported as "today".
+- **Plain placeholders:** after joining a paragraph's runs, a regex matches `{{ Name }}` and `«Name»` across run boundaries. Word often splits typed text across runs, so this has to work on the joined text, and formatting is kept per character.
+- **Body region** (`region.py`): each paragraph gets a role, and only `body` paragraphs can receive typing errors. Detection runs once on the template, so every letter uses the same zone.
+  - **Explicit markers win.** If the template contains `{{body}}` / `{{/body}}`, only text inside the markers is body. Markers can be standalone paragraphs (removed from the output) or inline. Validation checks that they're balanced and not nested.
+  - **Otherwise, auto-detect** from standard letter structure:
+    - **Salutation:** the first short paragraph matching `^(Dear|To whom it may concern|Hello|Hi|Greetings)\b…[,:]$`. Merge fields count as words, so `Dear {{FirstName}},` matches.
+    - **Complimentary close:** the first short paragraph after the salutation matching a list such as `Sincerely`, `Yours truly`, `Very truly yours`, `Best regards`, `Kind regards`, `Respectfully`, `Cordially`, or `Thank you`, followed by a comma. The list is extensible in config.
+    - **Body:** paragraphs strictly between the two. Inside that range, `Re:`/`Subject:` lines, centered headings, and paragraphs that are entirely bold or underlined are excluded.
+    - **Never body:** the date, inside address, and anything from the closing onward (signature, typed name and title, initials, `Enc.`, `cc:`, `P.S.`).
+  - **Fallback:** if no salutation or closing is found, no paragraph is body and validation warns: "Couldn't find the letter body; add {{body}} markers to enable typing errors." Errors are never applied to the whole letter by guesswork.
+  - The detected zone is reported in validation ("body: paragraphs 6–11, auto-detected") and **shaded in the preview**, so the user can check it before printing.
+- **Paragraph properties:** alignment (left/center/right/justify), "keep with next", and blank paragraphs (kept as blank lines). Space before/after is converted to blank lines with a configurable rounding rule. Manual line breaks (`w:br`) become forced breaks, and page breaks (`w:br w:type="page"`) become forced page breaks.
+- **Indents:** left, first-line, and hanging indents are converted to whole columns at the profile pitch (rounded to the nearest column). Right indents reduce the line width the same way.
+- **Ignored with a warning:** fonts, sizes, colors, and italic (maybe shown as underline, configurable).
+- **Errors:** tables, images, text boxes, multiple columns. These can't be typed sensibly.
+
+## 6. Validation (`validate.py`)
+Each problem becomes an `Issue(level=error|warning, location, message)`, shown in a list in the GUI and printed by the CLI.
+- **Field ↔ header:** every template field must exist as an Excel header. Matching is case- and whitespace-insensitive, and near misses get a "did you mean" suggestion. Unused columns are info only.
+- **Excel:**
+  - Missing or duplicate headers.
+  - Empty rows (skipped).
+  - Records where a field used in the template is blank (warning, listed per record).
+  - Formula cells with no cached value, which happens when a file was generated rather than saved in Excel (error).
+  - Numbers that look like lost leading zeros, e.g. a ZIP stored as a number (warning).
+- **Characters:** every character after the merge must be typeable with the profile's wheel. Known substitutions are applied automatically: smart quotes → straight, — → `--`, … → `...`, NBSP → space. Anything left over is reported per record with the field and the character.
+- **Layout:**
+  - A word longer than the line width (error).
+  - Letters that run past one page (info, with the page count).
+  - A heading or signature that would be split across pages (warning).
+- **Template structure:** unsupported fields, unbalanced body markers, tables/images (errors).
+- **Body zone:** info showing which paragraphs are body and how they were found (markers or auto-detection). A warning if typing errors are on but no body was found.
+
+## 7. Simulated typing errors (`errors.py`)
+- Errors are only applied to **body-region text that is not merge-field output** by default, so a recipient's name is never misspelled. They never apply to headers, footers, the date, the address, or the signature.
+- Error types are weighted:
+  - adjacent-key substitution (QWERTY neighbor map)
+  - doubled letter
+  - transposition
+  - skipped letter
+- Strikeover rendering uses the **column overprint** the typewriter does naturally. The style is a setting: `xout`, `overstrike`, or **`mix` (default, chosen at random per error with the seeded RNG)**.
+  - **x-out**: type the wrong part of the word, BS over it typing `x`, then continue with the correct word. This uses extra columns.
+  - **overstrike in place**: the correct letter is struck on top of the wrong one, with the same width. This only works for substitution errors; the other error types fall back to x-out.
+- **Ordering:** errors are injected **before** layout, so wrapping accounts for any extra columns.
+- **Rate:** a setting such as "about N errors per letter" or "per 100 words", with a minimum spacing between errors and none in the first or last word of a paragraph.
+- **Reproducible:** each letter gets a stored seed, so a reprint shows the same errors, and the preview matches what prints. There's also a "re-roll errors" button.
+
+## 8. Layout (`layout.py`)
+- Profile values:
+  - pitch (cpi)
+  - left and right margin columns. On the Olympia/Swintec these are set on the keyboard and can't be set by escape code, so the profile records what the user set. Wrapping stops at least one column before the right margin to avoid the firmware's mid-word auto-wrap.
+  - lines per inch
+  - page length and top/bottom margins in lines
+- Wrapping is greedy word-wrap per paragraph, working on Cells so bold, underline, and corrections carry through. Hyphenation: none at first; existing hyphens are allowed as break points.
+- Alignment:
+  - left
+  - center and right, by padding with spaces
+  - justify, by spreading extra spaces between words, last line left-aligned. An option can treat justify as left.
+- Pagination:
+  - Blank lines are tracked as well as text lines.
+  - Breaks follow "keep with next" and widow/orphan rules (at least 2 lines).
+  - Paragraph indents come from the template, in columns.
+- Output is `Page[Line[Cell]]`, which is all the preview and renderer need.
+
+## 9. Rendering (`render.py`) and profiles
+A profile TOML describes one machine, for example:
+```toml
+name = "Swintec 1146 CMP"
+usb = { vid = 0x067B, pid = 0x2305 }
+pitch_cpi = 10            # plus pitch_escape = "\x1bP" if host-settable
+lines_per_inch = 6
+page_lines = 66
+margins = { left = 10, right = 75 }   # as set on the keyboard
+newline = "\n"            # LF also returns on this firmware
+bold = "overstrike"       # or { on = "\x1bO", off = "\x1b&" } on Diablo-style machines
+underline = "overprint"   # BS/CR + "_" ; or { on = "\x1bE", off = "\x1bR" }
+line_pause_s = 0.0
+[charset]                 # Unicode → bytes, including SO/SI petals
+"°" = "\x0e.\x0f"
+```
+- **Overstrike bold / overprint underline / strikeover corrections:**
+  - Render each line as several passes: base text, then `CR` and passes containing only the bold re-strikes, underscores, and correction characters. Spaces are free carrier moves.
+  - On the Olympia/Swintec, CR returns without a feed and the line buffer is a column image that is flushed on CR, so passes don't overwrite each other in the buffer.
+  - The alternative is char/BS/char, which flushes on every BS and is slow.
+  - Check on hardware how much darker a re-strike looks with a carbon versus a fabric ribbon.
+- The preview renders the same Cells as HTML or a monospaced grid, with bold and underline shown and corrections drawn as overstrikes. That keeps the preview faithful.
+
+## 10. Printing (`job.py`, transports)
+- Data is sent in line-sized chunks with a per-line timeout. There's a status check (select, PE, error) before each page.
+- **Paper handling** is set by the profile's `paper = "single_sheet" | "continuous"`, and the GUI can override it per session.
+  - `single_sheet`: the job **pauses before every page**. The GUI shows "Insert sheet for letter 4, page 1 → Continue"; the CLI waits for Enter.
+  - `continuous`: FF between pages and letters, with no pause.
+- **Print queue in the GUI:** "Print all from #N", "Print selected", "Reprint". Each letter's status is saved in the session file (not printed, printing, printed, failed), so a crash or paper jam can resume.
+- Cancel: stop sending, then CAN to discard the machine's unprinted buffer.
+- Transports:
+  - **Windows:** SetupAPI enumeration of `GUID_DEVINTERFACE_USBPRINT`, `CreateFileW`, overlapped `WriteFile` with `CancelIoEx` for timeouts, plus `IOCTL_USBPRINT_GET_LPT_STATUS` (0x220030) and `IOCTL_USBPRINT_SOFT_RESET` (0x220040).
+  - **macOS/Linux:** pyusb, lifted from `cmpprint.py`.
+  - **Dry run:** writes the bytes to a file.
+
+## 11. GUI (PySide6)
+- **Top:** Template [Browse], Data [Browse] + sheet picker, Typewriter profile dropdown, typewriter status light.
+- **Left:** a letter table (#, a key field such as name/company chosen by the user, pages, issues, print status) with checkboxes.
+- **Right:** a preview of the selected letter, page by page, in typewriter rendering.
+- **Bottom:** the validation issues list (click to jump to the letter), the typing-errors toggle and rate, and the print buttons.
+
+## 12. Phases
+1. **Core, no hardware:** model, template, records, validate, merge, layout, preview, and the `validate`/`preview` CLI. Tests use fixture docx/xlsx files (including a split-run placeholder and a complex MERGEFIELD).
+2. **Typewriter output:** profiles, render, job, and pyusb transport (Mac). Golden byte tests; hardware checks on the Swintec. `print` in the CLI.
+3. **GUI:** PySide6 window, session persistence, the paper-prompt flow.
+4. **Windows:** usbprint ctypes transport, then hardware checks on Windows.
+5. **Typing errors:** errors.py plus preview and settings.
+6. **Packaging:** PyInstaller spec, WiX MSI, GitHub Actions; check the installer on a clean Windows VM.
+
+## 13. Verification
+- `uv run pytest`:
+  - template parsing (fields, split runs, formatting)
+  - region detection: a fixtures table of letter shapes (block, modified-block, a Re: line, no salutation, markers overriding auto-detection, a P.S.)
+  - validation cases
+  - layout golden tests (wrap, align, justify, pagination)
+  - errors determinism (same seed gives the same output)
+  - render golden bytes per profile
+- `daisywriter validate tpl.docx data.xlsx` and `daisywriter preview … --letter 3` on fixtures.
+- Hardware, Mac then Windows:
+  - `status`
+  - a one-letter print
+  - bold/underline/strikeover appearance
+  - a margin-edge line that must not trigger the firmware's auto-wrap
+  - cancel mid-letter
+  - a paper-out or off-line timeout, then resume
+- The MSI on a clean Windows VM: install, launch the GUI, print, uninstall.
+
+## 14. Open questions
+1. **Continuation pages:** should page 2+ get a typed "Page 2" or a recipient line, given that Word headers are ignored?
+2. **Bold/underline on the target machines:** the Olympia/Swintec firmware has no codes for either (`FIRMWARE_NOTES.md`), so overstrike/overprint is the plan there. Which other machines and profiles are planned, and do any have Diablo-style `ESC O`/`ESC E`?
+3. **Excel formatting:** should dates and numbers use the cell's Excel number format (closest to what the user sees), or a template field switch only?
+4. **Envelopes:** is printing envelopes from the same records in scope later?
