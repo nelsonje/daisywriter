@@ -62,11 +62,16 @@ src/daisywriter/
   template.py       # docx → Template; MERGEFIELD + placeholder parsing
   region.py         # paragraph roles: explicit {{body}} markers, else salutation→closing auto-detect
   records.py        # xlsx → records; header normalization; cell → string formatting
-  validate.py       # Issue(level, where, message); all checks in §6
+  issues.py         # Issue(level, message, where, letter)
+  values.py         # Word-style date/number pictures, case switches
+  profile.py        # profile loader, paper stocks, printwheel character mapping
+  pipeline.py       # runs template → records → merge → layout; field/profile cross-checks (§6)
+  samples.py        # prototype template + spreadsheet (`daisywriter make-samples`), used by tests
   merge.py          # Template + Record → MergedLetter
   errors.py         # typing-error injection (seeded RNG, QWERTY-neighbor model)
   layout.py         # re-wrap + alignment + pagination → Page/Line/Cell grid
-  render.py         # Page → bytes per Profile; also → preview text/HTML
+  preview.py        # Page → plain/ANSI text or HTML preview
+  render.py         # Page → bytes per Profile (phase 2)
   profiles/         # *.toml + loader (dataclass)
   transports/       # base.py, pyusb.py, usbprint.py (Windows), file.py (dry-run)
   job.py            # send loop: chunk after LF/FF, per-line timeout, line pause, progress + pause-for-paper callbacks
@@ -201,7 +206,7 @@ line_pause_s = 0.0
 - **Bottom:** the validation issues list (click to jump to the letter), the typing-errors toggle and rate, and the print buttons.
 
 ## 12. Phases
-1. **Core, no hardware:** model, template, records, validate, merge, layout, preview, and the `validate`/`preview` CLI. Tests use fixture docx/xlsx files (including a split-run placeholder and a complex MERGEFIELD).
+1. **Core, no hardware:** ✅ done (branch `phase1-core`). model, template, records, validate, merge, layout, preview, and the `validate`/`preview` CLI. Tests use fixture docx/xlsx files (including a split-run placeholder and a complex MERGEFIELD).
 2. **Typewriter output:** profiles, render, job, and pyusb transport (Mac). Golden byte tests; hardware checks on the Swintec. `print` in the CLI.
 3. **GUI:** PySide6 window, session persistence, the paper-prompt flow.
 4. **Windows:** usbprint ctypes transport, then hardware checks on Windows.

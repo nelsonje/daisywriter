@@ -1,0 +1,41 @@
+# Olympia Electronic Compact 2, US 356-U printwheel, built-in parallel port.
+# Character map from ../olympia-compact-electronic-2/FIRMWARE_NOTES.md
+# (derived from the firmware; not yet checked against a printout).
+name = "Olympia Compact 2 (US 356-U wheel)"
+transport = "usb_printer"
+usb = { vid = 0x067B, pid = 0x2305 }
+paper = "single_sheet"        # or "continuous"
+
+pitch_cpi = 10                # slide switch, or ESC P / E / M = 10 / 12 / 15
+lines_per_inch = 6            # slide switch, or ESC 6 / 4 / 3
+# Margins are set on the keyboard (no escape codes). Power-on defaults are 10 and 75.
+margins = { left = 10, right = 75 }
+# Columns kept clear before the right margin: a character landing on the right
+# margin makes the firmware wrap, possibly mid-word.
+right_guard = 1
+
+# Phase 2 (output), recorded here so profiles stay complete.
+newline = "\n"                # LF also returns to the left margin on this firmware
+bold = "overstrike"
+underline = "overprint"
+line_pause_s = 0.0
+
+# ASCII bytes that print a different glyph on this wheel, so the ASCII
+# character itself can't be typed.
+unavailable = "<>^\\`{|}~"
+
+# Unicode character -> bytes sent. SO (\u000E) ... SI (\u000F) selects the extra petals.
+[charset]
+"±" = "<"
+"°" = ">"
+"¢" = "^"
+"§" = "\\"
+"¶" = "`"
+"½" = "{"
+"¼" = "|"
+"²" = "}"
+"³" = "~"
+"|" = "\u000E,\u000F"
+"©" = "\u000E-\u000F"
+"£" = "\u000E.\u000F"
+"®" = "\u000E/\u000F"

@@ -1,0 +1,32 @@
+[project]
+name = "daisywriter"
+version = "0.1.0"
+description = "Mail merge from Word and Excel onto daisywheel typewriters"
+readme = "README.md"
+authors = [
+    { name = "Jacob Nelson", email = "jacob@jfet.net" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "openpyxl>=3.1.5",
+    "python-docx>=1.2.0",
+]
+
+[project.scripts]
+daisywriter = "daisywriter:main"
+
+[build-system]
+requires = ["uv_build>=0.13.7,<0.14.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.2.0",
+    "ruff>=0.17.4",
+]
+
+[tool.ruff]
+line-length = 110
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
