@@ -210,7 +210,7 @@ line_pause_s = 0.0
 
 ## 12. Phases
 1. **Core, no hardware:** ✅ done (branch `phase1-core`). model, template, records, validate, merge, layout, preview, and the `validate`/`preview` CLI. Tests use fixture docx/xlsx files (including a split-run placeholder and a complex MERGEFIELD).
-2. **Typewriter output:** profiles, render, job, and pyusb transport (Mac). Golden byte tests; hardware checks on the Swintec. `print` in the CLI.
+2. **Typewriter output:** 🔶 printing works from macOS (branch `phase2-print`); see §16 for hardware results. Still to check on paper: the new loading procedure and triple-strike bold. profiles, render, job, and pyusb transport (Mac). Golden byte tests; hardware checks on the Swintec. `print` in the CLI.
 3. **GUI:** PySide6 window, session persistence, the paper-prompt flow.
 4. **Windows:** usbprint ctypes transport, then hardware checks on Windows.
 5. **Typing errors:** errors.py plus preview and settings.
@@ -258,6 +258,18 @@ line_pause_s = 0.0
 
 ### CI
 `.github/workflows/ci.yml` runs ruff, pytest and a CLI smoke test on Ubuntu, macOS and Windows. The MSI job is added in phase 6.
+
+## 16. Hardware results (Swintec 1146 CMP, 2026-11-08)
+| Test | Result | Change made |
+|---|---|---|
+| Status read through pyusb | `0x18`: on-line, PE low, no error | none |
+| Margin probe (`testpage margins`), margins 10/75 at 10 cpi | 66 characters fit; the 67th wraps | line width = right − left + 1 (the right-margin column is usable); Swintec `right_guard = 0` (66 columns). The Olympia keeps 1 until measured. |
+| Overstrike bold, carbon film ribbon | only slightly bolder | `bold_strikes` profile setting; the Swintec is set to 3 (not yet printed) |
+| Overprint underline | good: continuous and aligned | none |
+| Full letter (Word template, letter 1) | matches the preview; about 1 min 40 s | none |
+| Paper loading | easier to insert the sheet until the rollers above the printing point catch it. The printing point is then 4 lines below the top edge. At the end, the sheet needed 3 more lines to clear those rollers. | `load_offset_lines = 4`, `eject_extra_lines = 3`; the paper prompt describes the procedure |
+
+Typing speed is about 6–7 s per full 66-column line, and each extra pass (bold, underline) adds a carriage return plus the struck characters.
 
 ## 14. Open questions
 1. **Envelope details** (when that phase starts): feed orientation and stock sizes, how the address block is found (a separate envelope template, or the inside-address paragraphs of the letter template), and whether the return address is typed or pre-printed.

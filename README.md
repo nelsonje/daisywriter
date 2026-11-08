@@ -5,9 +5,9 @@ and an Excel spreadsheet onto a typewriter, one typed letter per row.
 See [docs/PLAN.md](docs/PLAN.md) for the design and roadmap.
 
 ## Status
-Phase 1 (no hardware yet): read the template and spreadsheet, validate the
-merge, re-wrap the letters to the typewriter's margins, and preview them.
-Printing comes in phase 2.
+Phase 1 is done: read the template and spreadsheet, validate the merge,
+re-wrap the letters to the typewriter's margins, and preview them. Phase 2 is
+in progress: printing from macOS works on the Swintec 1146 CMP.
 
 ## Try it
 ```sh
@@ -18,6 +18,17 @@ uv run daisywriter preview  samples/letter-template.docx samples/letter-data.xls
 uv run daisywriter preview  samples/letter-template.docx samples/letter-data.xlsx -o preview.html
 uv run daisywriter profiles
 ```
+Printing (macOS/Linux with a USB printer-class parallel adapter; needs libusb, e.g. `brew install libusb`):
+```sh
+uv run daisywriter status                          # is the typewriter connected and on-line?
+uv run daisywriter testpage margins format         # calibration patterns
+uv run daisywriter print samples/letter-template.docx samples/letter-data.xlsx --letters 1
+uv run daisywriter print ... --dry-run out.bin     # write the bytes to a file instead
+```
+Before each page, insert a sheet until the rollers above the printing point catch it, with
+the typewriter ON LINE. daisywriter feeds to the 1-inch top margin, types the page, then
+rolls the sheet out.
+
 Useful options: `--profile olympia-compact-2`, `--today 2026-11-08`,
 `--page-numbers after-first --page-number-format "{{LastName}} - Page {page} - {{Today}}"`,
 `--no-justify`, `--top`/`--bottom` (lines), `--stock letter|legal|a4`.

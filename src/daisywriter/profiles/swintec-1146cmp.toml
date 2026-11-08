@@ -25,6 +25,7 @@ newline = "\n"
 # Overstrike bold is only slightly bolder with a carbon film ribbon (each strike
 # uses fresh film); clearly bolder with a fabric ribbon. Underline overprint is good.
 bold = "overstrike"
+bold_strikes = 3              # trying a triple strike on carbon film (not yet printed)
 underline = "overprint"
 line_pause_s = 0.0
 

@@ -4,7 +4,8 @@ from daisywriter.layout import Cell, Line
 from daisywriter.profile import load_profile
 from daisywriter.render import encode, passes, render_line
 
-SWINTEC = load_profile("swintec-1146cmp")
+_SW = load_profile("swintec-1146cmp")
+SWINTEC = dataclasses.replace(_SW, raw={**_SW.raw, "bold_strikes": 2})
 OLYMPIA = load_profile("olympia-compact-2")
 
 
@@ -41,3 +42,16 @@ def test_escape_code_bold_profiles():
                                                "underline": {"on": "\x1bE", "off": "\x1bR"}})
     line = Line(cells("a ") + cells("b", bold=True) + cells(" ") + cells("u", underline=True))
     assert render_line(line, diablo) == b"a \x1bOb\x1b& \x1bEu\x1bR\n"
+
+
+def test_triple_strike_bold():
+    triple = dataclasses.replace(SWINTEC, raw={**SWINTEC.raw, "bold_strikes": 3})
+    line = Line(cells("a ") + cells("bold", bold=True) + cells(" ") + cells("u", underline=True))
+    assert render_line(line, triple) == b"a bold u\r  bold _\r  bold\n"
+    both = Line(cells("x", bold=True, underline=True))
+    assert render_line(both, triple) == b"x\rx\rx\r_\n"
+    assert passes(both, triple) == 4
+
+
+def test_builtin_swintec_uses_triple_strike():
+    assert _SW.raw["bold_strikes"] == 3

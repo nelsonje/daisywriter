@@ -39,15 +39,22 @@ def _codes(profile: Profile, attr: str):
 
 
 def _strike_passes(cells: list[Cell], profile: Profile) -> list[str]:
+    """Passes after the text: bold re-strikes (bold_strikes - 1 of them, the first
+    also carrying underscores for plain underlined cells), then underscores
+    under cells that are both bold and underlined."""
     bold = _codes(profile, "bold") is None  # overstrike bold
     under = _codes(profile, "underline") is None  # overprint underline
-    second, third = [], []
+    strikes = max(1, int(profile.raw.get("bold_strikes", 2)))
+    restrikes = [[] for _ in range(strikes - 1)] or [[]]
+    last = []
     for c in cells:
         b = bold and c.bold and c.ch != " "
         u = under and c.underline
-        second.append(c.ch if b else "_" if u else " ")
-        third.append("_" if b and u else " ")
-    return [p for p in ("".join(second).rstrip(), "".join(third).rstrip()) if p]
+        for k, p in enumerate(restrikes):
+            p.append(c.ch if b and strikes > 1 else "_" if u and not b and k == 0 else " ")
+        last.append("_" if b and u else " ")
+    out = ["".join(p).rstrip() for p in restrikes] + ["".join(last).rstrip()]
+    return [p for p in out if p]
 
 
 def _base_pass(cells: list[Cell], profile: Profile) -> bytes:
