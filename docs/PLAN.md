@@ -259,18 +259,6 @@ line_pause_s = 0.0
 ### CI
 `.github/workflows/ci.yml` runs ruff, pytest and a CLI smoke test on Ubuntu, macOS and Windows. The MSI job is added in phase 6.
 
-## 16. Hardware results (Swintec 1146 CMP, 2026-11-08)
-| Test | Result | Change made |
-|---|---|---|
-| Status read through pyusb | `0x18`: on-line, PE low, no error | none |
-| Margin probe (`testpage margins`), margins 10/75 at 10 cpi | 66 characters fit; the 67th wraps | line width = right − left + 1 (the right-margin column is usable); Swintec `right_guard = 0` (66 columns). The Olympia keeps 1 until measured. |
-| Overstrike bold, carbon film ribbon | only slightly bolder | `bold_strikes` profile setting; the Swintec is set to 3 (not yet printed) |
-| Overprint underline | good: continuous and aligned | none |
-| Full letter (Word template, letter 1) | matches the preview; about 1 min 40 s | none |
-| Paper loading | easier to insert the sheet until the rollers above the printing point catch it. The printing point is then 4 lines below the top edge. At the end, the sheet needed 3 more lines to clear those rollers. | `load_offset_lines = 4`, `eject_extra_lines = 3`; the paper prompt describes the procedure |
-
-Typing speed is about 6–7 s per full 66-column line, and each extra pass (bold, underline) adds a carriage return plus the struck characters.
-
 ## 14. Open questions
 1. **Envelope details** (when that phase starts): feed orientation and stock sizes, how the address block is found (a separate envelope template, or the inside-address paragraphs of the letter template), and whether the return address is typed or pre-printed.
 
@@ -283,3 +271,15 @@ The near-term focus is the Nakajima-family machines (Swintec 1146 CMP / Olympia 
 | Brother EP-44 | **RS-232 serial** | Needs a **serial transport** (pyserial over a USB-serial adapter: baud, parity, and XON/XOFF or hardware handshaking). The `Transport` interface must not assume USB printer class. For example, `status()` may return "unknown" on serial, and soft reset may be unsupported. |
 
 Design consequences now: per-profile `transport = "usb_printer" | "serial"`, an optional capability set in `PortStatus`, bold/underline as either escape codes or overstrike (if any of these machines has native codes, the profile uses them), and a per-profile charset map.
+
+## 16. Hardware results (Swintec 1146 CMP, 2026-11-08)
+| Test | Result | Change made |
+|---|---|---|
+| Status read through pyusb | `0x18`: on-line, PE low, no error | none |
+| Margin probe (`testpage margins`), margins 10/75 at 10 cpi | 66 characters fit; the 67th wraps | line width = right − left + 1 (the right-margin column is usable); Swintec `right_guard = 0` (66 columns). The Olympia keeps 1 until measured. |
+| Overstrike bold, carbon film ribbon | only slightly bolder | `bold_strikes` profile setting; the Swintec is set to 3 (not yet printed) |
+| Overprint underline | good: continuous and aligned | none |
+| Full letter (Word template, letter 1) | matches the preview; about 1 min 40 s | none |
+| Paper loading | easier to insert the sheet until the rollers above the printing point catch it. The printing point is then 4 lines below the top edge. At the end, the sheet needed 3 more lines to clear those rollers. | `load_offset_lines = 4`, `eject_extra_lines = 3`; the paper prompt describes the procedure |
+
+Typing speed is about 6–7 s per full 66-column line, and each extra pass (bold, underline) adds a carriage return plus the struck characters.
