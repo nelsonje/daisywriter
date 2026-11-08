@@ -1,0 +1,24 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --locked
+      - run: uv run ruff check src tests
+      - run: uv run pytest
+      - name: CLI smoke test
+        run: |
+          uv run daisywriter make-samples samples
+          uv run daisywriter validate samples/letter-template.docx samples/letter-data.xlsx
+          uv run daisywriter preview samples/letter-template.docx samples/letter-data.xlsx --letters 1 > preview.txt

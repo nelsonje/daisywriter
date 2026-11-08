@@ -13,7 +13,6 @@ from .model import Align, Paragraph, Role
 from .profile import STOCKS, Profile
 
 MIN_LINE_WIDTH = 10
-DEFAULT_TAB_IN = 0.5
 
 
 @dataclass(frozen=True)
@@ -103,7 +102,7 @@ class _Wrapper:
             left, first = min(left, width - MIN_LINE_WIDTH), min(first, width - MIN_LINE_WIDTH)
             self.end_col = width
         self.left, self.first = left, first
-        default = max(1, round(DEFAULT_TAB_IN * profile.pitch_cpi))
+        default = max(1, profile.pt_to_cols(p.default_tab_pt))
         stops = {profile.pt_to_cols(t) for t in p.tab_stops_pt}
         if p.first_line_pt < 0:
             stops.add(left)  # a hanging indent acts as a tab stop, as in Word
@@ -225,7 +224,7 @@ def wrap_paragraph(p: Paragraph, profile: Profile, settings: LayoutSettings,
                    issues: list, where: str) -> list[tuple[Line, str]]:
     """Return (line, end) pairs; end is "page" where a forced page break follows."""
     cells = [Cell(ch, s.bold, s.underline, s.body) for s in p.spans for ch in s.text]
-    if not any(c.ch.strip() for c in cells) and not any(c.ch in "\n\f" for c in cells):
+    if _is_empty(p):
         return [(Line([], p.index, p.role), "end")]
     wrapper = _Wrapper(p, profile, issues, where)
     wrapped = wrapper.run(cells)
@@ -245,6 +244,7 @@ class _Block:
     keep_with_next: bool = False
     break_before: bool = False
     page_after: bool = False
+    top_gap: int = 0  # blank lines kept when the block starts the first page or follows a page break
 
     @property
     def blank(self) -> bool:
@@ -259,31 +259,53 @@ def _gap_lines(points: float, profile: Profile, threshold: float) -> int:
 
 def _blocks(paragraphs: list[Paragraph], profile: Profile, settings: LayoutSettings,
             issues: list, where: str) -> list[_Block]:
+    """Wrap paragraphs into blocks of lines.
+
+    Empty paragraphs don't become blocks: their height joins Word's space
+    before/after in one total, which is rounded to whole blank lines once, so
+    rounding doesn't add up across a run of empty paragraphs.
+    """
     blocks: list[_Block] = []
-    first_closing = next((i for i, p in enumerate(paragraphs) if p.role is Role.CLOSING), None)
+    nonempty = [i for i, p in enumerate(paragraphs) if not _is_empty(p)]
+    first_closing = next((i for i in nonempty if paragraphs[i].role is Role.CLOSING), None)
+    # keep the signature block together, and with the end of the body
+    chain_from = max((i for i in nonempty if first_closing is not None and i < first_closing),
+                     default=first_closing)
+    last = nonempty[-1] if nonempty else None
+    space_pt, empties = 0.0, 0
     prev = None
     for i, p in enumerate(paragraphs):
-        gap = 0
         same_style = prev is not None and p.style == prev.style
         if prev is not None and not (p.contextual_spacing and prev.contextual_spacing and same_style):
-            gap = _gap_lines(prev.space_after_pt + p.space_before_pt, profile,
-                             settings.spacing_threshold)
-        # keep the signature block together, and with the end of the body
-        keep = p.keep_with_next or (first_closing is not None and i + 1 < len(paragraphs)
-                                    and i + 1 >= first_closing)
+            space_pt += prev.space_after_pt + p.space_before_pt
+        prev = p
+        if _is_empty(p):
+            space_pt += profile.line_pt
+            empties += 1
+            continue
+        gap = _gap_lines(space_pt, profile, settings.spacing_threshold)
+        top_gap = empties
+        space_pt, empties = 0.0, 0
+        keep = p.keep_with_next or (chain_from is not None and chain_from <= i < last)
         lines: list[Line] = []
         first_block = True
         for line, end in wrap_paragraph(p, profile, settings, issues, f"{where}, paragraph {p.index}"):
             lines.append(line)
             if end == "page":
                 blocks.append(_Block(lines, gap if first_block else 0, False,
-                                     p.page_break_before and first_block, True))
+                                     p.page_break_before and first_block, True,
+                                     top_gap if first_block else 0))
                 lines, first_block = [], False
         if first_block or any(ln.cells for ln in lines):  # drop the blank rest of a page break
             blocks.append(_Block(lines, gap if first_block else 0, keep,
-                                 p.page_break_before and first_block))
-        prev = p
+                                 p.page_break_before and first_block, False,
+                                 top_gap if first_block else 0))
     return blocks
+
+
+def _is_empty(p: Paragraph) -> bool:
+    """A paragraph with no text: in Word, one blank line."""
+    return not any(ch.strip() or ch in "\n\f" for s in p.spans for ch in s.text)
 
 
 def paginate(blocks: list[_Block], capacity) -> list[list[Line]]:
@@ -309,7 +331,9 @@ def paginate(blocks: list[_Block], capacity) -> list[list[Line]]:
         if not cur and overflow and b.blank:
             i += 1  # no blank lines at the top of a continuation page
             continue
-        gap = b.gap if cur else 0
+        # Word's spacing disappears at the top of a page; empty paragraphs only do so on
+        # pages that start because the previous one filled up
+        gap = b.gap if cur else (0 if overflow else b.top_gap)
 
         # a keep-with-next chain moves to a new page as a unit when it fits there
         j = i

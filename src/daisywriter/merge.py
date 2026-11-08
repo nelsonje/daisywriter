@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import datetime as dt
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 
 from . import issues as I
 from .layout import Page
@@ -60,6 +60,37 @@ def merge_text(text: str, record: Record, dataset: DataSet, settings: MergeSetti
     return "".join(out)
 
 
+def drop_blank_lines(items) -> tuple[list[Span] | None, list[str], list[str]]:
+    """Leave out lines made only of blank fields, like an empty Address2.
+
+    items are (span, field name or None, blank field?). A line ends at a manual
+    line break or the end of the paragraph. Returns (spans, or None when the
+    whole paragraph goes; names of fields on dropped lines; other blank fields).
+    """
+    lines: list[list] = [[]]
+    for span, name, is_blank in items:
+        for k, part in enumerate(span.text.split("\n")):
+            if k:
+                lines.append([])
+            lines[-1].append((replace(span, text=part), name if k == 0 else None, is_blank and k == 0))
+
+    def droppable(line) -> bool:
+        return (any(b for _, _, b in line) and not any(n and not b for _, n, b in line)
+                and not "".join(s.text for s, _, _ in line).strip())
+
+    kept = [ln for ln in lines if not droppable(ln)]
+    gone = [n for ln in lines if droppable(ln) for _, n, _ in ln if n]
+    empty = [n for ln in kept for _, n, b in ln if b]
+    if not kept:
+        return None, gone, empty
+    spans: list[Span] = []
+    for k, line in enumerate(kept):
+        if k:
+            spans.append(Span("\n", body=spans[-1].body if spans else False))
+        spans += [s for s, _, _ in line if s.text]
+    return spans, gone, empty
+
+
 def merge_letter(number: int, template: Template, record: Record, dataset: DataSet,
                  profile: Profile, settings: MergeSettings) -> Letter:
     where = f"letter {number} (row {record.row})"
@@ -71,38 +102,32 @@ def merge_letter(number: int, template: Template, record: Record, dataset: DataS
     paragraphs = []
 
     for p in template.paragraphs:
-        spans = []
-        fields_here, blank_here = 0, 0
+        items = []  # (merged span, field name or None, blank field?)
         for s in p.spans:
             if s.field is not None:
-                fields_here += 1
                 value, problem = resolve(s.field, record, dataset, settings)
                 if problem:
                     issues.append(I.warning(f"{s.field.label}: {problem}", where, number))
                 if value is None:  # unknown column, reported once by validation
-                    spans.append(Span(s.field.label, s.bold, s.underline, body=s.body,
-                                      from_field=True))
+                    items.append((Span(s.field.label, s.bold, s.underline, body=s.body,
+                                       from_field=True), s.field.name, False))
                     continue
-                if not value.strip():
-                    blank_here += 1
                 text, subs, miss = profile.typeable(value)
                 place = s.field.label
-                spans.append(Span(text, s.bold, s.underline, body=s.body, from_field=True))
+                items.append((Span(text, s.bold, s.underline, body=s.body, from_field=True),
+                              s.field.name, not value.strip()))
             else:
                 text, subs, miss = profile.typeable(s.text)
                 place = f"paragraph {p.index}"
-                spans.append(Span(text, s.bold, s.underline, body=s.body))
+                items.append((Span(text, s.bold, s.underline, body=s.body), None, False))
             substituted.update(subs)
             for ch in miss:
                 missing.setdefault(ch, set()).add(place)
-        # a line made only of blank fields (an empty Address2, say) is left out
-        if fields_here and blank_here == fields_here and not "".join(
-                sp.text for sp in spans).strip():
-            dropped += [s.field.name for s in p.spans if s.field is not None]
-            continue
-        blank += [s.field.name for s, new in zip(p.spans, spans)
-                  if s.field is not None and not new.text.strip()]
-        paragraphs.append(p.copy_with(spans))
+        spans, gone, empty = drop_blank_lines(items)
+        dropped += gone
+        blank += empty
+        if spans is not None:
+            paragraphs.append(p.copy_with(spans))
 
     for name in dict.fromkeys(blank):
         issues.append(I.warning(f"«{name}» is blank", where, number))

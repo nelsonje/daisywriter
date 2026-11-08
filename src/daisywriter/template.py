@@ -249,6 +249,10 @@ class _Reader:
         except Exception as e:  # python-docx raises several types for bad files
             raise ValueError(f"{self.path.name} isn't a readable Word .docx file ({e})") from e
         self.styles = _Styles(document)
+        self.default_tab_pt = 36.0
+        dts = document.settings.element.find(qn("w:defaultTabStop"))
+        if dts is not None and dts.get(qn("w:val"), "").isdigit() and int(dts.get(qn("w:val"))) > 0:
+            self.default_tab_pt = int(dts.get(qn("w:val"))) / TWIPS_PER_PT
         self.paragraphs: list[Paragraph] = []
         self._check_sections(document)
         self._walk_blocks(document.element.body)
@@ -337,6 +341,7 @@ class _Reader:
             contextual_spacing=_on(_first(chain, "w:contextualSpacing")),
             style=self.styles.para_style_id(p_el),
             tab_stops_pt=tuple(sorted(set(tabs))),
+            default_tab_pt=self.default_tab_pt,
         )
         self._p_el = p_el
         self._where = where

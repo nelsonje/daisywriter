@@ -71,6 +71,7 @@ class Paragraph:
     contextual_spacing: bool = False
     style: str | None = None
     tab_stops_pt: tuple[float, ...] = ()
+    default_tab_pt: float = 36.0  # Word's default tab interval (Options > Default tab stops)
     role: Role = Role.OTHER
 
     @property

@@ -99,12 +99,13 @@ tests/fixtures/     # sample .docx/.xlsx, golden layouts and golden byte streams
     - **Never body:** the date, inside address, and anything from the closing onward (signature, typed name and title, initials, `Enc.`, `cc:`, `P.S.`).
   - **Fallback:** if no salutation or closing is found, no paragraph is body and validation warns: "Couldn't find the letter body; add {{body}} markers to enable typing errors." Errors are never applied to the whole letter by guesswork.
   - The detected zone is reported in validation ("body: paragraphs 6–11, auto-detected") and **shaded in the preview**, so the user can check it before printing.
-- **Paragraph properties:** alignment (left/center/right/justify), "keep with next", and blank paragraphs (kept as blank lines). Space before/after is converted to blank lines with a configurable rounding rule. Manual line breaks (`w:br`) become forced breaks, and page breaks (`w:br w:type="page"`) become forced page breaks.
+- **Paragraph properties:** alignment (left/center/right/justify), "keep with next", and blank paragraphs (kept as blank lines). Space before/after and empty paragraphs are added up in points and rounded to whole blank lines once per gap (threshold configurable), so Word's default 8 pt space-after doesn't inflate runs of empty paragraphs. Word's line spacing (1.08, 1.15, ...) is ignored; the typewriter's lpi decides. Manual line breaks (`w:br`) become forced breaks, and page breaks (`w:br w:type="page"`) become forced page breaks.
 - **Indents:** left, first-line, and hanging indents are converted to whole columns at the profile pitch (rounded to the nearest column). Right indents reduce the line width the same way.
+- **Blank fields:** a line made only of blank fields is left out, whether it is its own paragraph or one Shift+Enter line of an address block (the usual Word layout).
 - **Ignored with a warning:** fonts, sizes, colors, and italic (maybe shown as underline, configurable).
 - **Errors:** tables, images, text boxes, multiple columns. These can't be typed sensibly.
 
-## 6. Validation (`validate.py`)
+## 6. Validation (`pipeline.py`, `merge.py`, `records.py`)
 Each problem becomes an `Issue(level=error|warning, location, message)`, shown in a list in the GUI and printed by the CLI.
 - **Field ↔ header:** every template field must exist as an Excel header. Matching is case- and whitespace-insensitive, and near misses get a "did you mean" suggestion. Unused columns are info only.
 - **Excel:**
@@ -214,25 +215,47 @@ line_pause_s = 0.0
 6. **Packaging:** PyInstaller spec, WiX MSI, GitHub Actions; check the installer on a clean Windows VM.
 7. **Later:** envelopes, and the additional machines in §15.
 
-## 13. Verification
-- `uv run pytest`:
-  - template parsing (fields, split runs, formatting)
-  - region detection: a fixtures table of letter shapes (block, modified-block, a Re: line, no salutation, markers overriding auto-detection, a P.S.)
-  - validation cases
-  - layout golden tests (wrap, align, justify, pagination)
-  - errors determinism (same seed gives the same output)
-  - date and number formatting (format pictures, defaults, non-date cells)
-  - page numbering (pages 2+, reserved lines, continuation heading with merge fields)
-  - render golden bytes per profile
-- `daisywriter validate tpl.docx data.xlsx` and `daisywriter preview … --letter 3` on fixtures.
-- Hardware, Mac then Windows:
-  - `status`
-  - a one-letter print
-  - bold/underline/strikeover appearance
-  - a margin-edge line that must not trigger the firmware's auto-wrap
-  - cancel mid-letter
-  - a paper-out or off-line timeout, then resume
-- The MSI on a clean Windows VM: install, launch the GUI, print, uninstall.
+## 13. Testing
+**Principle:** the typewriter connection (`Transport`) is the only part that needs the machine. Everything above it is tested without hardware, using a fake transport from phase 2 on, so hardware tests stay few and manual.
+
+### Layers
+| Layer | What | Where |
+|---|---|---|
+| Unit | Each module: values, template, region, records, layout, profile | `tests/test_*.py` |
+| Real-Word fixtures | Templates saved by Word (spell-check marks, Shift+Enter address blocks, docDefaults spacing). Add Google Docs / LibreOffice exports when available. | `tests/fixtures/`, `test_word_fixture.py` |
+| Golden previews | Plain-text preview of every fixture letter, checked in; layout changes show as diffs. Regenerate with `uv run pytest tests/test_golden.py --update-golden` and review the diff. | `tests/golden/`, `test_golden.py` |
+| Properties (Hypothesis) | Wrapping never exceeds the margins, loses or reorders text, or drops formatting; justified lines are full width. Pagination never overfills a page, keeps order, starts no page with a blank line, and leaves ≥2 lines on each side of a split. | `test_properties.py` |
+| End-to-end | Template + data → letters through `pipeline.run` and the CLI | `test_pipeline.py`, `test_cli.py` |
+| Hardware | `@pytest.mark.hardware`, skipped unless `--hardware` | from phase 2 |
+
+### Added by later phases
+- **Phase 2 (output):**
+  - Golden byte streams per profile: bold re-strikes, underline passes, charset/SO-SI mapping, newlines.
+  - A `FakeTransport` that records bytes and simulates off-line, paper empty, write timeouts and adapter stalls, for testing the send loop, cancel (CAN) and paper prompts.
+  - The pyusb backend against a mocked `usb.core` device.
+- **Phase 3 (GUI):** `pytest-qt` flows against the fake transport:
+  - load files
+  - review issues
+  - select letters
+  - print, reprint, and resume after a failure
+- **Phase 4 (Windows):** the usbprint backend's pure parts (device path matching, status bits) on Windows CI. Real I/O only through hardware tests.
+- **Phase 5 (typing errors):**
+  - the same seed gives the same letter
+  - the error rate stays within bounds
+  - no errors in field text or outside the body
+  - the preview matches the bytes sent
+- **Phase 6 (installer):** CI builds the MSI, installs it silently (`msiexec /qn`), runs `daisywriter --help` and a dry-run print, then uninstalls.
+
+### Hardware checklist (`--hardware`, plus a printed test sheet)
+1. Status read; soft reset.
+2. One-line print.
+3. A margin-edge line that must not trigger the firmware's auto-wrap.
+4. Off-line during a job: a clean timeout, then resume.
+5. Paper-empty stall, then recovery on the next run.
+6. Judged by eye on the test sheet: re-strike darkness (fabric vs carbon ribbon), underline alignment, strikeover appearance.
+
+### CI
+`.github/workflows/ci.yml` runs ruff, pytest and a CLI smoke test on Ubuntu, macOS and Windows. The MSI job is added in phase 6.
 
 ## 14. Open questions
 1. **Envelope details** (when that phase starts): feed orientation and stock sizes, how the address block is found (a separate envelope template, or the inside-address paragraphs of the letter template), and whether the return address is typed or pre-printed.

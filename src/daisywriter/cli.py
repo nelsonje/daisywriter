@@ -154,7 +154,16 @@ def main(argv: list[str] | None = None) -> int:
     p.set_defaults(func=cmd_make_samples)
 
     a = ap.parse_args(argv)
+    _utf8_output()
     return a.func(a)
+
+
+def _utf8_output():
+    """Previews use box-drawing characters; Windows pipes default to a code page without them."""
+    for stream in (sys.stdout, sys.stderr):
+        enc = (getattr(stream, "encoding", None) or "").lower().replace("-", "")
+        if enc != "utf8" and hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8")
 
 
 if __name__ == "__main__":
