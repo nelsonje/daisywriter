@@ -14,7 +14,8 @@ def test_validate_and_preview(sample_dir, tmp_path, capsys):
 
     html = tmp_path / "p.html"
     assert main(["preview", *args, "-o", str(html)]) == 0
-    assert "<u>not</u>" in html.read_text() and "class='line body'" in html.read_text()
+    page = html.read_text(encoding="utf-8")
+    assert "<u>not</u>" in page and "class='line body'" in page
 
 
 def test_profiles_and_samples(tmp_path, capsys):

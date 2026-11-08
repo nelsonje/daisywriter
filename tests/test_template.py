@@ -110,6 +110,6 @@ def test_style_inheritance(tmp_path):
 
 def test_not_a_docx(tmp_path):
     bad = tmp_path / "bad.docx"
-    bad.write_text("nope")
+    bad.write_text("nope", encoding="utf-8")
     with pytest.raises(ValueError, match="isn't a readable"):
         load_template(bad)
