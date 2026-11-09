@@ -21,7 +21,7 @@ uv run daisywriter profiles
 Printing (macOS/Linux with a USB printer-class parallel adapter; needs libusb, e.g. `brew install libusb`):
 ```sh
 uv run daisywriter status                          # is the typewriter connected and on-line?
-uv run daisywriter testpage margins format         # calibration patterns
+uv run daisywriter testpage margins format bold    # calibration patterns
 uv run daisywriter print samples/letter-template.docx samples/letter-data.xlsx --letters 1
 uv run daisywriter print ... --dry-run out.bin     # write the bytes to a file instead
 ```

@@ -31,6 +31,7 @@ class Line:
     cells: list[Cell] = field(default_factory=list)
     para: int | None = None  # template paragraph index
     role: Role = Role.OTHER
+    raw: bytes | None = None  # typed as is instead of rendering the cells (calibration pages)
 
     @property
     def text(self) -> str:

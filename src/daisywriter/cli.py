@@ -264,8 +264,8 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--profile", help="typewriter profile id or .toml path")
     p.set_defaults(func=cmd_status)
 
-    p = sub.add_parser("testpage", help="type calibration patterns (margins, format, charset)")
-    p.add_argument("patterns", nargs="+", choices=["margins", "format", "charset"])
+    p = sub.add_parser("testpage", help="type calibration patterns (margins, format, bold, charset)")
+    p.add_argument("patterns", nargs="+", choices=["margins", "format", "bold", "charset"])
     _print_args(p, merge=False)
     p.set_defaults(func=cmd_testpage)
 

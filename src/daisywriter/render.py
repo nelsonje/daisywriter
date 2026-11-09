@@ -12,7 +12,7 @@ from .layout import Cell, Line
 from .profile import Profile
 
 SO, SI = b"\x0e", b"\x0f"
-CR, FF, CAN = b"\r", b"\x0c", b"\x18"
+BS, CR, FF, CAN = b"\x08", b"\r", b"\x0c", b"\x18"
 
 
 def encode(text: str, profile: Profile) -> bytes:
@@ -76,8 +76,25 @@ def _base_pass(cells: list[Cell], profile: Profile) -> bytes:
     return bytes(out).rstrip(b" ")
 
 
+def reverse_pass(cells: list[Cell], profile: Profile) -> bytes:
+    """A pass that types the non-space cells right to left, so the carrier
+    reaches each one from the right. BS flushes the character typed before it
+    and moves back a column; the newline or CR after the pass flushes the last."""
+    out = bytearray()
+    prev = None
+    for col in range(len(cells) - 1, -1, -1):
+        if cells[col].ch == " ":
+            continue
+        out += b" " * col if prev is None else BS * (prev + 1 - col)
+        out += encode(cells[col].ch, profile)
+        prev = col
+    return bytes(out)
+
+
 def render_line(line: Line, profile: Profile) -> bytes:
     """One printed line, ending with a newline."""
+    if line.raw is not None:
+        return line.raw + newline(profile)
     out = _base_pass(line.cells, profile)
     for p in _strike_passes(line.cells, profile):
         out += CR + encode(p, profile)
@@ -85,4 +102,6 @@ def render_line(line: Line, profile: Profile) -> bytes:
 
 
 def passes(line: Line, profile: Profile) -> int:
+    if line.raw is not None:
+        return 1 + line.raw.count(CR)
     return 1 + len(_strike_passes(line.cells, profile))

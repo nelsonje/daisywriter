@@ -2,7 +2,7 @@ import dataclasses
 
 from daisywriter.layout import Cell, Line
 from daisywriter.profile import load_profile
-from daisywriter.render import encode, passes, render_line
+from daisywriter.render import encode, passes, render_line, reverse_pass
 
 _SW = load_profile("swintec-1146cmp")
 SWINTEC = dataclasses.replace(_SW, raw={**_SW.raw, "bold_strikes": 2})
@@ -55,3 +55,25 @@ def test_triple_strike_bold():
 
 def test_builtin_swintec_uses_triple_strike():
     assert _SW.raw["bold_strikes"] == 3
+
+
+def test_reverse_pass_reaches_each_letter_from_the_right():
+    # "ab cd" from column 2: d at 6, then back over c, the space, b, a
+    assert reverse_pass(cells("  ab cd"), SWINTEC) == b"      d\x08\x08c\x08\x08\x08b\x08\x08a"
+    assert reverse_pass(cells("    "), SWINTEC) == b""
+
+
+def test_raw_lines_are_typed_as_is():
+    line = Line(cells("ignored"), raw=b"ab\rab")
+    assert render_line(line, SWINTEC) == b"ab\rab\n"
+    assert passes(line, SWINTEC) == 2
+
+
+def test_bold_test_page():
+    from daisywriter.testpage import bold_page
+    page = bold_page(SWINTEC)
+    rows = {line.text.split(":")[0]: line for line in page.lines if line.raw is not None}
+    assert passes(rows["plain"], SWINTEC) == 1
+    assert passes(rows["3, left+right"], SWINTEC) == 3
+    assert b"\x08" in rows["2, right"].raw and b"\x08" not in rows["3, left"].raw
+    assert all(len(line.text) <= SWINTEC.line_width for line in page.lines)
