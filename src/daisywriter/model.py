@@ -54,6 +54,7 @@ class Span:
     marker: str | None = None  # "body" or "/body"
     body: bool = False  # inside the letter body: typing errors allowed
     from_field: bool = False  # after merging: text came from a field value
+    strike: bool = False  # strikethrough
 
 
 @dataclass

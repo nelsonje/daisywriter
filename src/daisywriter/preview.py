@@ -20,8 +20,11 @@ def _heading(letter: Letter, total: int, page: int, pages: int) -> str:
     return f"Letter {letter.number} of {total} · row {letter.record.row}{who} · page {page} of {pages}"
 
 
+STRIKE = "\u0336"  # combining long stroke overlay
+
+
 def _plain_line(cells: list[Cell], width: int) -> list[str]:
-    text = "".join(c.ch for c in cells).ljust(width)
+    text = "".join(c.ch + (STRIKE if c.strike else "") for c in cells) + " " * max(0, width - len(cells))
     out = [text]
     if any(c.underline for c in cells):
         out.append("".join("‾" if c.underline else " " for c in cells).ljust(width))
@@ -29,14 +32,15 @@ def _plain_line(cells: list[Cell], width: int) -> list[str]:
 
 
 def _ansi_line(cells: list[Cell], width: int) -> str:
-    out, state = [], (False, False)
+    out, state = [], (False, False, False)
     for c in cells:
-        s = (c.bold, c.underline)
+        s = (c.bold, c.underline, c.strike)
         if s != state:
-            out.append("\x1b[0m" + ("\x1b[1m" if c.bold else "") + ("\x1b[4m" if c.underline else ""))
+            out.append("\x1b[0m" + ("\x1b[1m" if c.bold else "") + ("\x1b[4m" if c.underline else "")
+                       + ("\x1b[9m" if c.strike else ""))
             state = s
         out.append(c.ch)
-    if state != (False, False):
+    if state != (False, False, False):
         out.append("\x1b[0m")
     return "".join(out) + " " * max(0, width - len(cells))
 
@@ -81,12 +85,14 @@ def _html_cells(cells: list[Cell]) -> str:
     out = []
     for c in cells:
         ch = html.escape(c.ch)
+        if c.strike:
+            ch = f"<s>{ch}</s>"
         if c.underline:
             ch = f"<u>{ch}</u>"
         if c.bold:
             ch = f"<b>{ch}</b>"
         out.append(ch)
-    return "".join(out).replace("</u><u>", "").replace("</b><b>", "")
+    return "".join(out).replace("</s><s>", "").replace("</u><u>", "").replace("</b><b>", "")
 
 
 def render_html(letters: list[Letter], total: int, width: int, title: str = "daisywriter preview") -> str:

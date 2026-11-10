@@ -111,17 +111,17 @@ def merge_letter(number: int, template: Template, record: Record, dataset: DataS
                 if problem:
                     issues.append(I.warning(f"{s.field.label}: {problem}", where, number))
                 if value is None:  # unknown column, reported once by validation
-                    items.append((Span(s.field.label, s.bold, s.underline, body=s.body,
+                    items.append((Span(s.field.label, s.bold, s.underline, body=s.body, strike=s.strike,
                                        from_field=True), s.field.name, False))
                     continue
                 text, subs, miss = profile.typeable(value)
                 place = s.field.label
-                items.append((Span(text, s.bold, s.underline, body=s.body, from_field=True),
+                items.append((Span(text, s.bold, s.underline, body=s.body, from_field=True, strike=s.strike),
                               s.field.name, not value.strip()))
             else:
                 text, subs, miss = profile.typeable(s.text)
                 place = f"paragraph {p.index}"
-                items.append((Span(text, s.bold, s.underline, body=s.body), None, False))
+                items.append((Span(text, s.bold, s.underline, body=s.body, strike=s.strike), None, False))
             substituted.update(subs)
             for ch in miss:
                 missing.setdefault(ch, set()).add(place)

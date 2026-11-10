@@ -82,7 +82,7 @@ tests/fixtures/     # sample .docx/.xlsx, golden layouts and golden byte streams
 ```
 
 ## 5. Reading the Word template (`template.py`)
-- Walk each `w:p` in the document body in document order. Section headers and footers are ignored, and a template that has them gets an info message. Build `Span`s from runs. Each span has text, **bold**, **underline**, and the effective formatting, where style inheritance is resolved through python-docx (`run.bold` is `None`, so fall back to the paragraph/character style).
+- Walk each `w:p` in the document body in document order. Section headers and footers are ignored, and a template that has them gets an info message. Build `Span`s from runs. Each span has text, **bold**, **underline**, **strikethrough** (double strikethrough is typed as single), and the effective formatting, where style inheritance is resolved through python-docx (`run.bold` is `None`, so fall back to the paragraph/character style).
 - **Real merge fields:**
   - Handle `w:fldSimple` with `MERGEFIELD Name`, and complex fields (`w:fldChar begin` → `w:instrText` → `separate` → result runs → `end`).
   - A MERGEFIELD becomes `Span(field="Name")` and takes the formatting of its result run. Field switches (`\* Upper`, `\* Caps`, `\@ "MMMM d, yyyy"`, `\# "0.00"`) are parsed, and the common ones are supported.
@@ -179,12 +179,13 @@ margins = { left = 10, right = 75 }   # as set on the keyboard
 newline = "\n"            # LF also returns on this firmware
 bold = "overstrike"       # or { on = "\x1bO", off = "\x1b&" } on Diablo-style machines
 underline = "overprint"   # BS/CR + "_" ; or { on = "\x1bE", off = "\x1bR" }
+strikethrough = "-"       # overtyped on struck-out text, in its own pass
 line_pause_s = 0.0
 [charset]                 # Unicode → bytes, including SO/SI petals
 "°" = "\x0e.\x0f"
 ```
-- **Overstrike bold / overprint underline / strikeover corrections:**
-  - Render each line as several passes: base text, then `CR` and passes containing only the bold re-strikes, underscores, and correction characters. Spaces are free carrier moves.
+- **Overstrike bold / overprint underline / strikethrough / strikeover corrections:**
+  - Render each line as several passes: base text, then `CR` and passes containing only the bold re-strikes, underscores, strikethrough hyphens, and correction characters. Each cell takes its marks in that order, one per pass. Spaces are free carrier moves.
   - On the Olympia/Swintec, CR returns without a feed and the line buffer is a column image that is flushed on CR, so passes don't overwrite each other in the buffer.
   - The alternative is char/BS/char, which flushes on every BS and is slow.
   - Check on hardware how much darker a re-strike looks with a carbon versus a fabric ribbon.

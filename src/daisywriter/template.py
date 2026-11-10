@@ -2,7 +2,7 @@
 
 Only the main document body is read; page headers and footers are ignored
 (letterhead is assumed to be pre-printed). Formatting is reduced to what a
-typewriter can do: bold, underline, alignment, indents and blank-line spacing.
+typewriter can do: bold, underline, strikethrough, alignment, indents and blank-line spacing.
 """
 from __future__ import annotations
 
@@ -186,7 +186,7 @@ def split_placeholders(spans: list[Span]) -> list[Span]:
         if not group:
             return
         text = "".join(s.text for s in group)
-        attrs = [(s.bold, s.underline) for s in group for _ in s.text]
+        attrs = [(s.bold, s.underline, s.strike) for s in group for _ in s.text]
         pos = 0
 
         def emit_text(a, b):
@@ -195,15 +195,15 @@ def split_placeholders(spans: list[Span]) -> list[Span]:
                 k = j
                 while k < b and attrs[k] == attrs[j]:
                     k += 1
-                out.append(Span(text[j:k], bold=attrs[j][0], underline=attrs[j][1]))
+                out.append(Span(text[j:k], bold=attrs[j][0], underline=attrs[j][1], strike=attrs[j][2]))
                 j = k
 
         for m in PLACEHOLDER.finditer(text):
             emit_text(pos, m.start())
             inner = m.group("inner") if m.group("inner") is not None else m.group("guil")
             marker, ref = _placeholder_ref(inner)
-            b, u = attrs[m.start()]
-            out.append(Span(marker=marker, field=ref, bold=b, underline=u))
+            b, u, x = attrs[m.start()]
+            out.append(Span(marker=marker, field=ref, bold=b, underline=u, strike=x))
             pos = m.end()
         emit_text(pos, len(text))
         group.clear()
@@ -222,8 +222,9 @@ def _merge_adjacent(spans: list[Span]) -> list[Span]:
     out: list[Span] = []
     for s in spans:
         if (out and s.field is None and s.marker is None and out[-1].field is None
-                and out[-1].marker is None and (out[-1].bold, out[-1].underline) == (s.bold, s.underline)):
-            out[-1] = Span(out[-1].text + s.text, s.bold, s.underline)
+                and out[-1].marker is None
+                and (out[-1].bold, out[-1].underline, out[-1].strike) == (s.bold, s.underline, s.strike)):
+            out[-1] = Span(out[-1].text + s.text, s.bold, s.underline, strike=s.strike)
         elif s.field is not None or s.marker is not None or s.text:
             out.append(s)
     return out
@@ -369,8 +370,8 @@ class _Reader:
                     self._content(content)
             # w:del, w:moveFrom, w:pPr, bookmarks, proofing marks: nothing to type
 
-    def _format(self, r_el) -> tuple[bool, bool, bool, bool]:
-        """(bold, underline, uppercase, hidden) for a run."""
+    def _format(self, r_el) -> tuple[tuple[bool, bool, bool], bool, bool]:
+        """((bold, underline, strike), uppercase, hidden) for a run."""
         chain = self.styles.rpr_chain(r_el, self._p_el)
         bold = _on(_first(chain, "w:b"))
         u = _first(chain, "w:u")
@@ -379,20 +380,22 @@ class _Reader:
         hidden = _on(_first(chain, "w:vanish"))
         if _on(_first(chain, "w:i")):
             self.note("italic", I.info("italic is typed as plain text", self._where))
-        if _on(_first(chain, "w:strike")) or _on(_first(chain, "w:dstrike")):
-            self.note("strike", I.info("strikethrough is typed as plain text", self._where))
-        return bold, underline, upper, hidden
+        strike = _on(_first(chain, "w:strike"))
+        if _on(_first(chain, "w:dstrike")):
+            strike = True
+            self.note("dstrike", I.info("double strikethrough is typed as single", self._where))
+        return (bold, underline, strike), upper, hidden
 
     def _suppressing(self) -> bool:
         """Inside a field whose instruction or result we replace."""
         return any(f["phase"] == "instr" or not f["keep"] for f in self._fields)
 
     def _run(self, r_el):
-        bold, underline, upper, hidden = self._format(r_el)
+        fmt, upper, hidden = self._format(r_el)
         for el in r_el.iterchildren():
             tag = el.tag
             if tag == qn("w:fldChar"):
-                self._fld_char(el.get(qn("w:fldCharType")), bold, underline)
+                self._fld_char(el.get(qn("w:fldCharType")), fmt)
                 continue
             if tag == qn("w:instrText"):
                 if self._fields and self._fields[-1]["phase"] == "instr":
@@ -420,17 +423,17 @@ class _Reader:
             if self._fields:
                 top = self._fields[-1]
                 if top["phase"] == "result" and top["fmt"] is None and text.strip():
-                    top["fmt"] = (bold, underline)
+                    top["fmt"] = fmt
             if self._suppressing():
                 continue
             if upper:
                 text = text.upper()
-            self._spans.append(Span(text, bold, underline))
+            self._spans.append(Span(text, fmt[0], fmt[1], strike=fmt[2]))
 
-    def _fld_char(self, kind, bold, underline):
+    def _fld_char(self, kind, fmt):
         if kind == "begin":
             self._fields.append({"instr": "", "phase": "instr", "keep": False,
-                                 "fmt": None, "begin_fmt": (bold, underline)})
+                                 "fmt": None, "begin_fmt": fmt})
         elif kind == "separate" and self._fields:
             f = self._fields[-1]
             f["phase"] = "result"
@@ -445,7 +448,7 @@ class _Reader:
     def _emit_field(self, instr, fmt, result_kept):
         ftype, ref = parse_field_instruction(instr)
         if ref is not None:
-            self._spans.append(Span(field=ref, bold=fmt[0], underline=fmt[1]))
+            self._spans.append(Span(field=ref, bold=fmt[0], underline=fmt[1], strike=fmt[2]))
         elif ftype in PAGE_FIELDS:
             self.note(f"page{self._where}", I.warning(
                 "Word page-number fields are left out; turn on daisywriter's page numbers instead",
@@ -463,10 +466,7 @@ class _Reader:
         if ftype in KEEP_RESULT_FIELDS:
             self._content(el)
             return
-        fmt = None
-        for r in el.findall(qn("w:r")):
-            b, u, _, _ = self._format(r)
-            fmt = (b, u)
-            break
+        r = el.find(qn("w:r"))
+        fmt = self._format(r)[0] if r is not None else (False, False, False)
         if not self._suppressing():
-            self._emit_field(instr, fmt or (False, False), False)
+            self._emit_field(instr, fmt, False)

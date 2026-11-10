@@ -113,3 +113,18 @@ def test_not_a_docx(tmp_path):
     bad.write_text("nope", encoding="utf-8")
     with pytest.raises(ValueError, match="isn't a readable"):
         load_template(bad)
+
+
+def test_strikethrough(tmp_path):
+    def build(d):
+        p = d.add_paragraph("Price: ")
+        p.add_run("$40").font.strike = True
+        p.add_run(" $30, ")
+        p.add_run("{{Old}}").font.double_strike = True
+        samples.add_field(p, "MERGEFIELD New", "«New»")
+        p.runs[-2].font.strike = True  # the field's result run
+    t = _doc_with(tmp_path, build)
+    spans = t.paragraphs[0].spans
+    assert [(s.text or s.field.name, s.strike) for s in spans] == [
+        ("Price: ", False), ("$40", True), (" $30, ", False), ("Old", True), ("New", True)]
+    assert any("double strikethrough" in i.message for i in t.issues)

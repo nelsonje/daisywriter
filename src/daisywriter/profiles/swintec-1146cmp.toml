@@ -27,6 +27,7 @@ newline = "\n"
 bold = "overstrike"
 bold_strikes = 3              # trying a triple strike on carbon film (not yet printed)
 underline = "overprint"
+strikethrough = "-"            # overtyped on struck-out text
 line_pause_s = 0.0
 
 unavailable = "^~`\\{}"

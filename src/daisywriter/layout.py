@@ -21,6 +21,7 @@ class Cell:
     bold: bool = False
     underline: bool = False
     body: bool = False
+    strike: bool = False
 
 
 BLANK = Cell(" ")
@@ -213,7 +214,8 @@ def _align(w: _Wrapped, align: Align, end_col: int, justify: bool, flip: bool) -
         out, gi = [], 0
         for k, c in enumerate(cells):
             if gi < len(gaps) and k == gaps[gi]:
-                fill = Cell(" ", underline=c.underline and cells[k + 1].underline, body=c.body)
+                fill = Cell(" ", underline=c.underline and cells[k + 1].underline, body=c.body,
+                            strike=c.strike and cells[k + 1].strike)
                 out += [fill] * add[gi]
                 gi += 1
             out.append(c)
@@ -224,7 +226,7 @@ def _align(w: _Wrapped, align: Align, end_col: int, justify: bool, flip: bool) -
 def wrap_paragraph(p: Paragraph, profile: Profile, settings: LayoutSettings,
                    issues: list, where: str) -> list[tuple[Line, str]]:
     """Return (line, end) pairs; end is "page" where a forced page break follows."""
-    cells = [Cell(ch, s.bold, s.underline, s.body) for s in p.spans for ch in s.text]
+    cells = [Cell(ch, s.bold, s.underline, s.body, s.strike) for s in p.spans for ch in s.text]
     if _is_empty(p):
         return [(Line([], p.index, p.role), "end")]
     wrapper = _Wrapper(p, profile, issues, where)

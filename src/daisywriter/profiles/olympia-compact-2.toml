@@ -26,6 +26,7 @@ right_guard = 1
 newline = "\n"                # LF also returns to the left margin on this firmware
 bold = "overstrike"
 underline = "overprint"
+strikethrough = "-"            # overtyped on struck-out text
 line_pause_s = 0.0
 
 # ASCII bytes that print a different glyph on this wheel, so the ASCII

@@ -30,6 +30,15 @@ def test_bold_and_underlined_needs_a_third_pass():
     assert render_line(line, SWINTEC) == b"x both it\r  both_it\r  ____ __\n"
 
 
+def test_strikethrough_is_overtyped():
+    line = Line(cells("was ") + [Cell(ch, strike=True) for ch in "$40 x"])
+    assert render_line(line, SWINTEC) == b"was $40 x\r    -----\n"
+    # bold and underlined and struck: re-strike, then underscores, then hyphens
+    both = Line([Cell("a", bold=True, underline=True, strike=True), Cell("b", strike=True)])
+    assert render_line(both, SWINTEC) == b"ab\ra-\r_\r-\n"
+    assert passes(both, SWINTEC) == 4
+
+
 def test_charset_mapping_and_shift_out_runs():
     assert encode("50°", OLYMPIA) == b"50>"
     # adjacent shift-out characters share one SO ... SI

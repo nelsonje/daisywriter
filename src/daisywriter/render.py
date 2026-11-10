@@ -1,10 +1,11 @@
 """Turn laid-out lines into the bytes a typewriter needs.
 
 Typewriters without bold or underline codes (the Nakajima machines) get them by
-typing a line in passes: the text, then CR and a pass with bold re-strikes and
-underscores, then (only where a cell is both bold and underlined) a third pass.
-CR returns to the left margin without feeding, and leading spaces become
-carrier moves, so extra passes cost one carriage return each.
+typing a line in passes: the text, then CR and passes with bold re-strikes,
+underscores and strikethrough marks. Each cell takes its marks in that order,
+one per pass, so a pass holds the first mark of every cell, the next pass the
+second, and so on. CR returns to the left margin without feeding, and leading
+spaces become carrier moves, so extra passes cost one carriage return each.
 """
 from __future__ import annotations
 
@@ -38,22 +39,23 @@ def _codes(profile: Profile, attr: str):
     return None
 
 
-def _strike_passes(cells: list[Cell], profile: Profile) -> list[str]:
-    """Passes after the text: bold re-strikes (bold_strikes - 1 of them, the first
-    also carrying underscores for plain underlined cells), then underscores
-    under cells that are both bold and underlined."""
+def _overprint_passes(cells: list[Cell], profile: Profile) -> list[str]:
+    """Passes after the text. Each cell gets bold re-strikes (bold_strikes - 1),
+    then an underscore, then the strikethrough mark, one per pass."""
     bold = _codes(profile, "bold") is None  # overstrike bold
     under = _codes(profile, "underline") is None  # overprint underline
     strikes = max(1, int(profile.raw.get("bold_strikes", 2)))
-    restrikes = [[] for _ in range(strikes - 1)] or [[]]
-    last = []
+    mark = profile.raw.get("strikethrough", "-")
+    marks = []
     for c in cells:
-        b = bold and c.bold and c.ch != " "
-        u = under and c.underline
-        for k, p in enumerate(restrikes):
-            p.append(c.ch if b and strikes > 1 else "_" if u and not b and k == 0 else " ")
-        last.append("_" if b and u else " ")
-    out = ["".join(p).rstrip() for p in restrikes] + ["".join(last).rstrip()]
+        m = [c.ch] * (strikes - 1) if bold and c.bold and c.ch != " " else []
+        if under and c.underline:
+            m.append("_")
+        if c.strike:
+            m.append(mark)
+        marks.append(m)
+    depth = max(map(len, marks), default=0)
+    out = ["".join(m[k] if k < len(m) else " " for m in marks).rstrip() for k in range(depth)]
     return [p for p in out if p]
 
 
@@ -96,7 +98,7 @@ def render_line(line: Line, profile: Profile) -> bytes:
     if line.raw is not None:
         return line.raw + newline(profile)
     out = _base_pass(line.cells, profile)
-    for p in _strike_passes(line.cells, profile):
+    for p in _overprint_passes(line.cells, profile):
         out += CR + encode(p, profile)
     return out + newline(profile)
 
@@ -104,4 +106,4 @@ def render_line(line: Line, profile: Profile) -> bytes:
 def passes(line: Line, profile: Profile) -> int:
     if line.raw is not None:
         return 1 + line.raw.count(CR)
-    return 1 + len(_strike_passes(line.cells, profile))
+    return 1 + len(_overprint_passes(line.cells, profile))

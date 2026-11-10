@@ -2,7 +2,7 @@
 
 "margins" types ruler lines one column apart around the right margin, to find
 where the firmware's own wrap starts (it must never trigger). "format" types
-bold, underline and both, next to plain text, to judge overstrike on the
+bold, underline, both and strikethrough, next to plain text, to judge overstrike on the
 installed ribbon. "bold" compares ways of re-striking bold text, including
 strikes that reach each letter from the right, where play in the carrier
 drive might shift them enough to thicken the strokes. "charset" types every character the profile can type.
@@ -14,8 +14,8 @@ from .profile import Profile
 from .render import CR, encode, reverse_pass
 
 
-def _text(s: str, bold=False, underline=False) -> list[Cell]:
-    return [Cell(ch, bold, underline) for ch in s]
+def _text(s: str, bold=False, underline=False, strike=False) -> list[Cell]:
+    return [Cell(ch, bold, underline, strike=strike) for ch in s]
 
 
 def ruler(n: int) -> str:
@@ -42,11 +42,14 @@ def format_page(profile: Profile) -> Page:
              Line(_text("bold:       ") + _text(sample, bold=True)),
              Line(_text("underline:  ") + _text(sample, underline=True)),
              Line(_text("both:       ") + _text(sample, bold=True, underline=True)),
+             Line(_text("strikeout:  ") + _text(sample, strike=True)),
              Line(),
              Line(_text("mixed:      a ") + _text("bold", bold=True) + _text(" word, an ")
                   + _text("underlined", underline=True) + _text(" word, and ")
                   + _text("both", bold=True, underline=True) + _text(" together.")),
              Line(_text("underlined spaces:  ") + _text("these words share one line", underline=True)),
+             Line(_text("struck out:  a ") + _text("bold", bold=True, strike=True) + _text(" and an ")
+                  + _text("underlined", underline=True, strike=True) + _text(" word.")),
              ]
     return Page(1, lines)
 

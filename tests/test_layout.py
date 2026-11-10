@@ -93,6 +93,9 @@ def test_formatting_carries_into_cells():
     (ln, _), = wrap_paragraph(p, PROFILE, LayoutSettings(), [], "")
     assert [c.bold for c in ln.cells[6:10]] == [True] * 4
     assert all(c.underline for c in ln.cells[10:])
+    p = Paragraph([Span("was "), Span("forty dollars", strike=True)], 1)
+    (ln, _), = wrap_paragraph(p, PROFILE, LayoutSettings(), [], "")
+    assert [c.strike for c in ln.cells] == [False] * 4 + [True] * 13
 
 
 def test_empty_paragraph_is_one_blank_line():

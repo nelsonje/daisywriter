@@ -42,7 +42,7 @@ Useful options: `--profile olympia-compact-2`, `--today 2026-11-08`,
   `{{Amount:$#,##0.00}}`, or Word field switches (`\@`, `\#`). `{{LastName:Upper}}` changes
   case. `--ignore-excel-formats` turns Excel formats off.
 - `{{Today}}` or a Word DATE field gives the print date ("November 8, 2026" unless formatted).
-- Bold, underline, alignment (including justify), and indents are typed; fonts and sizes are
+- Bold, underline, strikethrough (overtyped with hyphens), alignment (including justify), and indents are typed; fonts and sizes are
   ignored. Lines are re-wrapped to the typewriter's margins; only paragraph breaks and
   Shift+Enter line breaks are kept.
 - A line made only of blank fields (an empty `Address2`, say) is left out.
