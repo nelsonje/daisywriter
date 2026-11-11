@@ -35,8 +35,8 @@ def test_single_sheet_feeds_and_ejects():
     # top margin 6 lines from the top edge, the sheet is loaded 4 lines down: feed 2
     assert t.writes[0] == b"\n\n"
     assert t.writes[1:4] == [b"x\n"] * 3
-    # eject: 66 lines per page - (6 + 3) typed + 3 extra
-    assert t.writes[4] == b"\n" * 60
+    # eject: 66 lines per page - (6 + 3) typed + 5 extra
+    assert t.writes[4] == b"\n" * 62
 
 
 def test_one_prompt_per_page():

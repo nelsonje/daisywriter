@@ -11,8 +11,8 @@ paper = "single_sheet"
 # 2026-11-08: the first line printed 2 lines lower than the 6-line top margin).
 load_offset_lines = 4
 # After the bottom edge reaches the printing point, feed this much more so the
-# sheet clears those rollers.
-eject_extra_lines = 3
+# sheet clears those rollers (3 left just the edge held, 2026-11-10).
+eject_extra_lines = 5
 
 pitch_cpi = 10
 lines_per_inch = 6
@@ -22,10 +22,12 @@ margins = { left = 10, right = 75 }
 right_guard = 0
 
 newline = "\n"
-# Overstrike bold is only slightly bolder with a carbon film ribbon (each strike
-# uses fresh film); clearly bolder with a fabric ribbon. Underline overprint is good.
+# Re-striking in place barely darkens carbon film. A re-strike typed right to
+# left lands slightly to the side (play in the carrier drive), which reads as
+# bold. Measured 2026-11-10 with `testpage bold`: ["right"] is clearly bolder
+# than 2 or 3 strikes from the left; ["left", "right"] is only slightly bolder.
 bold = "overstrike"
-bold_strikes = 3              # trying a triple strike on carbon film (not yet printed)
+bold_restrikes = ["right"]
 underline = "overprint"
 strikethrough = "-"            # overtyped on struck-out text
 line_pause_s = 0.0

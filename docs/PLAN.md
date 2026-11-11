@@ -211,7 +211,7 @@ line_pause_s = 0.0
 
 ## 12. Phases
 1. **Core, no hardware:** ✅ done (branch `phase1-core`). model, template, records, validate, merge, layout, preview, and the `validate`/`preview` CLI. Tests use fixture docx/xlsx files (including a split-run placeholder and a complex MERGEFIELD).
-2. **Typewriter output:** 🔶 printing works from macOS (branch `phase2-print`); see §16 for hardware results. Still to check on paper: the new loading procedure and `testpage bold` (triple strike, strikes from the right). profiles, render, job, and pyusb transport (Mac). Golden byte tests; hardware checks on the Swintec. `print` in the CLI.
+2. **Typewriter output:** 🔶 printing works from macOS (branch `phase2-print`); see §16 for hardware results. Still to check on paper: the longer eject, bold from the right in a letter, letter 2 (blank address lines dropped), and a two-page letter. profiles, render, job, and pyusb transport (Mac). Golden byte tests; hardware checks on the Swintec. `print` in the CLI.
 3. **GUI:** PySide6 window, session persistence, the paper-prompt flow.
 4. **Windows:** usbprint ctypes transport, then hardware checks on Windows.
 5. **Typing errors:** errors.py plus preview and settings.
@@ -278,18 +278,22 @@ Design consequences now: per-profile `transport = "usb_printer" | "serial"`, an 
 |---|---|---|
 | Status read through pyusb | `0x18`: on-line, PE low, no error | none |
 | Margin probe (`testpage margins`), margins 10/75 at 10 cpi | 66 characters fit; the 67th wraps | line width = right − left + 1 (the right-margin column is usable); Swintec `right_guard = 0` (66 columns). The Olympia keeps 1 until measured. |
-| Overstrike bold, carbon film ribbon | only slightly bolder | `bold_strikes` profile setting; the Swintec is set to 3 (not yet printed) |
+| Overstrike bold, carbon film ribbon | only slightly bolder | see the 2026-11-10 rows |
 | Overprint underline | good: continuous and aligned | none |
 | Full letter (Word template, letter 1) | matches the preview; about 1 min 40 s | none |
 | Paper loading | easier to insert the sheet until the rollers above the printing point catch it. The printing point is then 4 lines below the top edge. At the end, the sheet needed 3 more lines to clear those rollers. | `load_offset_lines = 4`, `eject_extra_lines = 3`; the paper prompt describes the procedure |
+| 2026-11-10: new loading procedure (`testpage format bold`) | first line 1 inch down, as intended; at the end the rollers still held the edge of the sheet | `eject_extra_lines = 5` (not yet printed) |
+| 2026-11-10: bold strikes from the left (`testpage format`, `bold`) | 2 strikes noticeably bolder than 1; 3 barely bolder than 2 | none |
+| 2026-11-10: bold strikes from the right (`testpage bold`) | one re-strike typed right to left is clearly bolder than 2 or 3 from the left; the carrier-play bars are slightly thicker but still one clean mark. Left + right and right + right are only slightly bolder than one from the right. | `bold_restrikes = ["right"]` on the Swintec (default `["left"]`) |
+| 2026-11-10: strikethrough (`testpage format`) | hyphens sit at the middle of capitals, a little above the middle of lowercase; small gaps between hyphens. Acceptable. | none |
 
 Typing speed is about 6–7 s per full 66-column line, and each extra pass (bold, underline) adds a carriage return plus the struck characters.
 
 ### Bold on carbon film
 Carbon film is fully black after the first strike, so re-striking in the same spot adds little. Bold needs wider strokes, which Diablo/Qume printers got by striking again 1/120 in to the side. Options considered for the Nakajima machines:
-- **Re-strike from the right** (`testpage bold`, `render.reverse_pass`): type the bold text right to left with BS so the carrier reaches each letter from the right. If the carrier drive has play, each letter lands a little to the side. The page also has bars struck from both sides to show whether there is any play. Not yet printed.
+- **Re-strike from the right** (`testpage bold`, `render.reverse_pass`): type the bold text right to left with BS so the carrier reaches each letter from the right. Play in the carrier drive makes each letter land a little to the side. **Works on the Swintec** (2026-11-10): clearly bolder, still clean. Profiles choose the direction of each re-strike with `bold_restrikes`.
 - **Sub-column offsets by switching pitch:** ruled out. The carrier moves in 1/60-in steps (6/5/4 per character at 10/12/15 cpi), and a pitch change rounds the carrier column (`0DA6`), but `06C4` then moves the carrier by the remainder, so it always lands back on the new grid.
 - **Platen offset (ESC D / ESC U backlash):** about 1/50 in, varies between units, and doesn’t return reliably to the line (see `FIRMWARE_NOTES.md` in the Olympia repo). Ruled out.
 - **Harder strikes:** hammer force is a ROM table plus the impression switch, which only changes by hand and affects every character. Ruled out.
-- **Fallback:** show bold as underline (a typist's convention), as a profile setting.
+- **Fallback** (not needed on the Swintec): show bold as underline (a typist's convention), as a profile setting. A ROM patch adding Diablo-style `ESC O` / `ESC &` also looks feasible (free space at `DF3–EFF`, a hook at the end of the ESC chain and in the strike sequence at `A57`) but is only 1/60-in resolution.
 

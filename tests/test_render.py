@@ -1,11 +1,13 @@
 import dataclasses
 
+import pytest
+
 from daisywriter.layout import Cell, Line
 from daisywriter.profile import load_profile
 from daisywriter.render import encode, passes, render_line, reverse_pass
 
 _SW = load_profile("swintec-1146cmp")
-SWINTEC = dataclasses.replace(_SW, raw={**_SW.raw, "bold_strikes": 2})
+SWINTEC = dataclasses.replace(_SW, raw={**_SW.raw, "bold_restrikes": ["left"]})
 OLYMPIA = load_profile("olympia-compact-2")
 
 
@@ -54,7 +56,7 @@ def test_escape_code_bold_profiles():
 
 
 def test_triple_strike_bold():
-    triple = dataclasses.replace(SWINTEC, raw={**SWINTEC.raw, "bold_strikes": 3})
+    triple = dataclasses.replace(SWINTEC, raw={**SWINTEC.raw, "bold_restrikes": ["left", "left"]})
     line = Line(cells("a ") + cells("bold", bold=True) + cells(" ") + cells("u", underline=True))
     assert render_line(line, triple) == b"a bold u\r  bold _\r  bold\n"
     both = Line(cells("x", bold=True, underline=True))
@@ -62,8 +64,19 @@ def test_triple_strike_bold():
     assert passes(both, triple) == 4
 
 
-def test_builtin_swintec_uses_triple_strike():
-    assert _SW.raw["bold_strikes"] == 3
+def test_bold_restrike_from_the_right():
+    line = Line(cells("a ") + cells("bd", bold=True) + cells(" ") + cells("u", underline=True))
+    # the re-strike runs right to left; the underscore gets a left-to-right pass of its own
+    assert render_line(line, _SW) == b"a bd u\r   d\x08\x08b\r     _\n"
+    assert passes(line, _SW) == 3
+    both = dataclasses.replace(_SW, raw={**_SW.raw, "bold_restrikes": ["left", "right"]})
+    assert render_line(line, both) == b"a bd u\r  bd _\r   d\x08\x08b\n"
+
+
+def test_unknown_restrike_direction():
+    bad = dataclasses.replace(_SW, raw={**_SW.raw, "bold_restrikes": ["up"]})
+    with pytest.raises(ValueError, match="bold_restrikes"):
+        render_line(Line(cells("x", bold=True)), bad)
 
 
 def test_reverse_pass_reaches_each_letter_from_the_right():

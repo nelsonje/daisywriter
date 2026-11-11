@@ -2,9 +2,9 @@
 
 Typewriters without bold or underline codes (the Nakajima machines) get them by
 typing a line in passes: the text, then CR and passes with bold re-strikes,
-underscores and strikethrough marks. Each cell takes its marks in that order,
-one per pass, so a pass holds the first mark of every cell, the next pass the
-second, and so on. CR returns to the left margin without feeding, and leading
+underscores and strikethrough marks. A bold re-strike pass can run right to
+left (see bold_restrikes); the other marks share left-to-right passes where
+their columns are free. CR returns to the left margin without feeding, and leading
 spaces become carrier moves, so extra passes cost one carriage return each.
 """
 from __future__ import annotations
@@ -39,24 +39,38 @@ def _codes(profile: Profile, attr: str):
     return None
 
 
-def _overprint_passes(cells: list[Cell], profile: Profile) -> list[str]:
-    """Passes after the text. Each cell gets bold re-strikes (bold_strikes - 1),
-    then an underscore, then the strikethrough mark, one per pass."""
+def bold_restrikes(profile: Profile) -> list[str]:
+    """Direction of each bold re-strike pass: "left" types left to right as usual,
+    "right" types right to left so the carrier reaches each letter from the right,
+    where play in the carrier drive shifts it slightly (a shadow)."""
+    ways = profile.raw.get("bold_restrikes", ["left"])
+    for w in ways:
+        if w not in ("left", "right"):
+            raise ValueError(f"bold_restrikes: {w!r} isn't \"left\" or \"right\"")
+    return list(ways)
+
+
+def _overprint_passes(cells: list[Cell], profile: Profile) -> list[tuple[str, str]]:
+    """(direction, text) passes after the text. Bold cells are re-struck once in
+    each bold_restrikes pass. Underscores and strikethrough marks then go into
+    the first left-to-right pass that is free at their column, or new ones."""
     bold = _codes(profile, "bold") is None  # overstrike bold
     under = _codes(profile, "underline") is None  # overprint underline
-    strikes = max(1, int(profile.raw.get("bold_strikes", 2)))
     mark = profile.raw.get("strikethrough", "-")
-    marks = []
-    for c in cells:
-        m = [c.ch] * (strikes - 1) if bold and c.bold and c.ch != " " else []
-        if under and c.underline:
-            m.append("_")
-        if c.strike:
-            m.append(mark)
-        marks.append(m)
-    depth = max(map(len, marks), default=0)
-    out = ["".join(m[k] if k < len(m) else " " for m in marks).rstrip() for k in range(depth)]
-    return [p for p in out if p]
+    ways = bold_restrikes(profile) if bold and any(c.bold and c.ch != " " for c in cells) else []
+    grid = [[c.ch if c.bold and c.ch != " " else " " for c in cells] for _ in ways]
+    for i, c in enumerate(cells):
+        for m in ("_" if under and c.underline else "", mark if c.strike else ""):
+            if not m:
+                continue
+            k = next((k for k, w in enumerate(ways) if w == "left" and grid[k][i] == " "), None)
+            if k is None:
+                ways.append("left")
+                grid.append([" "] * len(cells))
+                k = len(ways) - 1
+            grid[k][i] = m
+    out = [(w, "".join(g).rstrip()) for w, g in zip(ways, grid, strict=True)]
+    return [(w, t) for w, t in out if t]
 
 
 def _base_pass(cells: list[Cell], profile: Profile) -> bytes:
@@ -93,13 +107,17 @@ def reverse_pass(cells: list[Cell], profile: Profile) -> bytes:
     return bytes(out)
 
 
+def _cells(text: str) -> list[Cell]:
+    return [Cell(ch) for ch in text]
+
+
 def render_line(line: Line, profile: Profile) -> bytes:
     """One printed line, ending with a newline."""
     if line.raw is not None:
         return line.raw + newline(profile)
     out = _base_pass(line.cells, profile)
-    for p in _overprint_passes(line.cells, profile):
-        out += CR + encode(p, profile)
+    for way, text in _overprint_passes(line.cells, profile):
+        out += CR + (encode(text, profile) if way == "left" else reverse_pass(_cells(text), profile))
     return out + newline(profile)
 
 

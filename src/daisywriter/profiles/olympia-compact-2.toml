@@ -11,7 +11,7 @@ paper = "single_sheet"        # or "continuous"
 load_offset_lines = 4
 # After the bottom edge reaches the printing point, feed this much more so the
 # sheet clears those rollers.
-eject_extra_lines = 3
+eject_extra_lines = 5
 
 pitch_cpi = 10                # slide switch, or ESC P / E / M = 10 / 12 / 15
 lines_per_inch = 6            # slide switch, or ESC 6 / 4 / 3
