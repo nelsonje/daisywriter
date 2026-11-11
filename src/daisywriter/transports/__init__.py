@@ -20,6 +20,7 @@ def open_transport(profile: Profile, dry_run: str | None = None) -> Transport:
     usb = profile.raw.get("usb", {})
     vid, pid = int(usb.get("vid", 0x067B)), int(usb.get("pid", 0x2305))
     if sys.platform == "win32":
-        raise TransportError("printing from Windows comes in phase 4 (usbprint.sys transport)")
+        from .usbprint import UsbPrintTransport
+        return UsbPrintTransport(vid, pid)
     from .pyusb import PyUsbTransport
     return PyUsbTransport(vid, pid)
