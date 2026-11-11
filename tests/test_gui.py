@@ -240,3 +240,27 @@ def test_typing_errors_and_new_errors(qtbot, tmp_path, files):
     w2, _ = open_window(qtbot, tmp_path, *files)
     assert w2.errors_box.isChecked() and w2.error_rate.value() == 10
     assert [x.paragraphs for x in w2.merge.letters] == again
+
+
+def test_header_checkbox(qtbot, tmp_path, files):
+    from PySide6.QtCore import QPoint
+    w, _ = open_window(qtbot, tmp_path, *files)
+    w.show()
+    header = w.check_header
+
+    def click():
+        x = header.sectionViewportPosition(COL_CHECK) + header.sectionSize(COL_CHECK) // 2
+        qtbot.mouseClick(header.viewport(), Qt.MouseButton.LeftButton, pos=QPoint(x, header.height() // 2))
+
+    assert header.state == Qt.CheckState.Checked and checked(w) == [1, 2, 3, 4, 5]
+    click()  # all checked: uncheck all
+    assert header.state == Qt.CheckState.Unchecked and checked(w) == []
+    w.table.item(2, COL_CHECK).setCheckState(Qt.CheckState.Checked)  # the user checks one
+    assert header.state == Qt.CheckState.PartiallyChecked
+    click()  # some checked: check all
+    assert header.state == Qt.CheckState.Checked and checked(w) == [1, 2, 3, 4, 5]
+    click()
+    click()  # none checked: check all
+    assert checked(w) == [1, 2, 3, 4, 5]
+    w.table.item(0, COL_CHECK).setCheckState(Qt.CheckState.Unchecked)
+    assert header.state == Qt.CheckState.PartiallyChecked

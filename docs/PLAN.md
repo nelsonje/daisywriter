@@ -208,7 +208,7 @@ line_pause_s = 0.0
 
 ## 11. GUI (PySide6)
 - **Top:** Template and Data with Browse, the worksheet, the typewriter profile; the date for `{{Today}}`, page numbers, justify; Reload (F5). The files are watched, so saving them in Word or Excel reloads the letters.
-- **Left:** a letter table (checkbox, #, the first two columns of the row, pages, issues, print status). Check All / None / Not printed. Letters that aren't printed yet start checked.
+- **Left:** a letter table (checkbox, #, the first two columns of the row, pages, issues, print status). A checkbox in the header checks every letter (or unchecks them all when all are checked) and shows checked / dash / empty for all / some / none; "Check not printed" checks just the letters still to print. Letters that aren't printed yet start checked, and checks survive a reload.
 - **Right:** the selected letter's sheets, drawn from the emulated typewriter, with the body shaded and the margins marked.
 - **Bottom:** the validation issues list (click one to see its letter); Check typewriter (status light); the target (typewriter, or emulator saving a PDF); Print checked letters; Stop (after the line being typed).
 - **Quit button** at the bottom right ("Exit" on Windows), as well as the menus.

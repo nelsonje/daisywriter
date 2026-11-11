@@ -51,6 +51,7 @@ from ..profile import DEFAULT_PROFILE, builtin_profiles
 from ..session import FAILED, NOT_PRINTED, PRINTED, PRINTING, Session
 from ..transports import TransportError, open_transport
 from ..transports.emulator import Emulator, emulate
+from .check_header import CheckHeader
 from .sheet_view import PreviewArea
 from .worker import PrintWorker
 
@@ -144,7 +145,12 @@ class MainWindow(QMainWindow):
         options.addWidget(reload_button)
 
         self.table = QTableWidget(0, 6)
+        self.check_header = CheckHeader(COL_CHECK, self.table)
+        self.check_header.setToolTip("check or uncheck every letter")
+        self.check_header.clicked_check.connect(self._toggle_all)
+        self.table.setHorizontalHeader(self.check_header)
         self.table.setHorizontalHeaderLabels(["", "#", "Letter", "Pages", "Issues", "Status"])
+        self.table.itemChanged.connect(self._item_changed)
         self.table.verticalHeader().hide()
         self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
@@ -153,14 +159,15 @@ class MainWindow(QMainWindow):
         for col in range(6):
             header.setSectionResizeMode(col, QHeaderView.ResizeMode.ResizeToContents)
         header.setSectionResizeMode(COL_WHO, QHeaderView.ResizeMode.Stretch)
+        header.setSectionResizeMode(COL_CHECK, QHeaderView.ResizeMode.Fixed)
+        header.resizeSection(COL_CHECK, self.check_header.indicator_width() + 16)
         self.table.itemSelectionChanged.connect(self._show_selected)
 
         checks = QHBoxLayout()
-        for label, pick in [("All", lambda st: True), ("None", lambda st: False),
-                            ("Not printed", lambda st: st != PRINTED)]:
-            b = QPushButton(label)
-            b.clicked.connect(lambda _=False, f=pick: self.check_where(f))
-            checks.addWidget(b)
+        not_printed = QPushButton("Check not printed")
+        not_printed.setToolTip("check the letters that haven't been printed, and uncheck the rest")
+        not_printed.clicked.connect(lambda: self.check_where(lambda st: st != PRINTED))
+        checks.addWidget(not_printed)
         checks.addStretch(1)
         left = QWidget()
         lv = QVBoxLayout(left)
@@ -417,11 +424,10 @@ class MainWindow(QMainWindow):
             self.table.setItem(row, COL_STATUS, QTableWidgetItem())
             self._show_status(letter)
         if kept and kept[1] == len(letters):  # the same letters: keep the user's checks
-            for r in range(len(letters)):
-                state = Qt.CheckState.Checked if r + 1 in kept[0] else Qt.CheckState.Unchecked
-                self.table.item(r, COL_CHECK).setCheckState(state)
+            self._set_checks([r + 1 in kept[0] for r in range(len(letters))])
         else:
             self.check_where(lambda st: st != PRINTED)
+        self._update_check_header()
         if letters:
             self.table.selectRow(min(select, len(letters)) - 1)
         else:
@@ -499,8 +505,9 @@ class MainWindow(QMainWindow):
         return self.letter(self.table.item(rows[0].row(), COL_NUM).data(Qt.ItemDataRole.UserRole))
 
     def checked_numbers(self) -> set[int]:
-        return {r + 1 for r in range(self.table.rowCount())
-                if self.table.item(r, COL_CHECK).checkState() == Qt.CheckState.Checked}
+        items = [self.table.item(r, COL_CHECK) for r in range(self.table.rowCount())]
+        return {r + 1 for r, item in enumerate(items)  # rows are None while the table fills
+                if item is not None and item.checkState() == Qt.CheckState.Checked}
 
     def checked_letters(self) -> list[Letter]:
         if not self.merge:
@@ -510,12 +517,35 @@ class MainWindow(QMainWindow):
                 if self.table.item(r, COL_CHECK).checkState() == Qt.CheckState.Checked]
 
     def check_where(self, pick):
-        """Check the letters whose status pick(status) accepts."""
+        """Check the letters whose status pick(status) accepts, and uncheck the rest."""
+        states = []
         for r in range(self.table.rowCount()):
             letter = self.letter(r + 1)
             st = self.session.state(self.template_edit.text(), letter).status if self.session else NOT_PRINTED
-            state = Qt.CheckState.Checked if pick(st) else Qt.CheckState.Unchecked
-            self.table.item(r, COL_CHECK).setCheckState(state)
+            states.append(pick(st))
+        self._set_checks(states)
+
+    def _set_checks(self, states: list[bool]):
+        blocked = self.table.blockSignals(True)  # one header update, not one per row
+        for r, on in enumerate(states):
+            self.table.item(r, COL_CHECK).setCheckState(
+                Qt.CheckState.Checked if on else Qt.CheckState.Unchecked)
+        self.table.blockSignals(blocked)
+        self._update_check_header()
+
+    def _item_changed(self, item: QTableWidgetItem):
+        if item.column() == COL_CHECK:
+            self._update_check_header()
+
+    def _update_check_header(self):
+        rows, n = self.table.rowCount(), len(self.checked_numbers())
+        self.check_header.set_state(Qt.CheckState.Unchecked if n == 0 or rows == 0 else
+                                    Qt.CheckState.Checked if n == rows else Qt.CheckState.PartiallyChecked)
+
+    def _toggle_all(self):
+        """Check every letter, or uncheck them all if they're all checked."""
+        rows = self.table.rowCount()
+        self._set_checks([len(self.checked_numbers()) < rows] * rows)
 
     def _show_selected(self):
         letter = self.selected_letter()
