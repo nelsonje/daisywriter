@@ -9,8 +9,25 @@ Phases 1, 2, 3 and 5 are done: read the template and spreadsheet, validate
 the merge, re-wrap the letters to the typewriter's margins, add typing errors
 with typewriter-style corrections if wanted, preview them, and print them from
 macOS (tested on the Swintec 1146 CMP) or on an emulated typewriter, from the
-command line or the window. Printing from Windows (phase 4) is written and
-tested without a typewriter. Next: the installer (phase 6).
+command line or the window. Printing from Windows (phase 4) and the Windows
+installer (phase 6) are written and tested in CI, but not yet with the
+typewriter.
+
+## Install on Windows
+Each CI run on GitHub builds an installer: open the run under Actions, download
+the `daisywriter-msi` artifact, unzip it and run the `.msi`. It installs
+daisywriter for all users (Windows asks for permission, and warns that the
+publisher is unknown because the installer isn't signed yet), adds daisywriter
+to the Start menu, and puts `daisywriter-cli` on the PATH for the command line.
+Uninstall it from Settings > Apps.
+
+To build it yourself on Windows:
+```sh
+uv sync --group packaging
+uv run --group packaging pyinstaller packaging/daisywriter.spec --noconfirm
+dotnet tool install --global wix --version 5.0.2
+wix build packaging/daisywriter.wxs -arch x64 -wx -bindpath app=<full path to dist\daisywriter> -d Version=0.1.0 -o daisywriter.msi
+```
 
 ## Try it
 ```sh

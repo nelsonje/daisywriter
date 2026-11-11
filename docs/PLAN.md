@@ -223,7 +223,7 @@ line_pause_s = 0.0
 3. **GUI:** ✅ PySide6 window (`gui/`), session persistence (`session.py`), the paper-prompt flow, printing on a background thread with Stop, and an emulator target that saves a PDF; see §11. The preview draws the emulated sheets, so it shows exactly what the bytes produce. Not yet tried with the typewriter (§16.1).
 4. **Windows:** 🔶 branch `phase4-windows`: the usbprint transport, tested on Windows CI (SetupAPI with no adapter; writes, a timeout and a status error against a named pipe). Not yet tried with the typewriter (§16.1).
 5. **Typing errors:** ✅ `errors.py`, overstrike rendering, previews, CLI options (`--typing-errors`, `--error-style`) and the window's controls; see §7. Not yet seen on paper (§16.1).
-6. **Packaging:** PyInstaller spec, WiX MSI, GitHub Actions; check the installer on a clean Windows VM.
+6. **Packaging:** 🔶 branch `phase6-installer`. `packaging/daisywriter.spec` (PyInstaller) freezes two programs into one folder: `daisywriter.exe` (the window, no console) and `daisywriter-cli.exe`. `packaging/daisywriter.wxs` (WiX 5.0.2; v6+ needs the Open Source Maintenance Fee EULA) packs it into a per-machine MSI (Program Files\daisywriter, a Start menu shortcut, the folder on PATH, upgrades replace older versions). CI builds it on Windows, installs it silently, runs both programs, checks the shortcut and PATH, uninstalls, and uploads the MSI (about 41 MB) as an artifact. Not yet: an icon, an installer UI beyond Windows' progress bar, code signing (Windows warns about an unknown publisher), and a check on a clean Windows machine by hand.
 7. **Later:** envelopes, and the additional machines in §15.
 
 ## 13. Testing
@@ -256,7 +256,7 @@ line_pause_s = 0.0
   - the error rate stays within bounds
   - no errors in field text or outside the body
   - the preview matches the bytes sent
-- **Phase 6 (installer):** CI builds the MSI, installs it silently (`msiexec /qn`), runs `daisywriter --help` and a dry-run print, then uninstalls.
+- **Phase 6 (installer):** done in the `installer` CI job: build the MSI, install it silently (`msiexec /qn`), run `daisywriter-cli` (profiles, make-samples, an emulated print with typing errors), open and close the window (`DAISYWRITER_SMOKE_TEST`), check the Start menu shortcut and PATH, uninstall and check that everything is gone. WiX warnings are errors (`-wx`): a missing folder is only a warning and gives an empty MSI.
 
 ### Hardware checklist (`--hardware`, plus a printed test sheet)
 1. Status read; soft reset.
@@ -313,6 +313,7 @@ None of these block later phases; the emulator already passes the first four.
 - [ ] Windows: Device Manager lists the adapter as USB Printing Support; `daisywriter status` finds it and reads the status (on-line, off-line, cable out).
 - [ ] Windows: `testpage margins format` and one letter print as on macOS.
 - [ ] Windows: off-line in the middle of a page gives the timeout message and the job cancels cleanly; the next job prints.
+- [ ] Windows: install the MSI from CI on a real machine (the UAC prompt, the unknown-publisher warning), start daisywriter from the Start menu, print, then uninstall.
 - [ ] Windows: what an adapter stall looks like (PE high, as when the cable is loose on macOS), and whether `soft_reset()` recovers it without disturbing the typewriter.
 
 ### Bold on carbon film
