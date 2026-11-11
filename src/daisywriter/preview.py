@@ -23,8 +23,14 @@ def _heading(letter: Letter, total: int, page: int, pages: int) -> str:
 STRIKE = "\u0336"  # combining long stroke overlay
 
 
+def _shown(c: Cell) -> str:
+    """Text previews show the last character struck over a cell (an x-out's x,
+    or the letter that corrects a wrong one)."""
+    return c.over[-1] if c.over else c.ch
+
+
 def _plain_line(cells: list[Cell], width: int) -> list[str]:
-    text = "".join(c.ch + (STRIKE if c.strike else "") for c in cells) + " " * max(0, width - len(cells))
+    text = "".join(_shown(c) + (STRIKE if c.strike else "") for c in cells) + " " * max(0, width - len(cells))
     out = [text]
     if any(c.underline for c in cells):
         out.append("".join("‾" if c.underline else " " for c in cells).ljust(width))
@@ -32,15 +38,15 @@ def _plain_line(cells: list[Cell], width: int) -> list[str]:
 
 
 def _ansi_line(cells: list[Cell], width: int) -> str:
-    out, state = [], (False, False, False)
+    out, state = [], (False, False, False, False)
     for c in cells:
-        s = (c.bold, c.underline, c.strike)
+        s = (c.bold, c.underline, c.strike, bool(c.over))
         if s != state:
             out.append("\x1b[0m" + ("\x1b[1m" if c.bold else "") + ("\x1b[4m" if c.underline else "")
-                       + ("\x1b[9m" if c.strike else ""))
+                       + ("\x1b[9m" if c.strike else "") + ("\x1b[31m" if c.over else ""))
             state = s
-        out.append(c.ch)
-    if state != (False, False, False):
+        out.append(_shown(c))
+    if state != (False, False, False, False):
         out.append("\x1b[0m")
     return "".join(out) + " " * max(0, width - len(cells))
 
@@ -78,6 +84,8 @@ pre { margin: 0; font: 15px/1.25 "Courier New", Courier, monospace; }
 .body { background: #fff7d6; }
 .edge { border-right: 1px dashed #bbb; display: inline-block; }
 b { font-weight: 900; }
+.o { position: relative; }
+.o::after { content: attr(data-o); position: absolute; left: 0; }
 """
 
 
@@ -85,6 +93,8 @@ def _html_cells(cells: list[Cell]) -> str:
     out = []
     for c in cells:
         ch = html.escape(c.ch)
+        if c.over:  # typing-error correction: draw what's struck over it on top
+            ch = f"<span class='o' data-o='{html.escape(c.over[-1], quote=True)}'>{ch}</span>"
         if c.strike:
             ch = f"<s>{ch}</s>"
         if c.underline:

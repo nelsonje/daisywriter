@@ -209,3 +209,34 @@ def test_quit_button_asks_while_printing(qtbot, tmp_path, files, fake):
     assert status(w, 1).startswith("printed")
     w.quit_button.click()
     assert not w.isVisible()
+
+
+def test_typing_errors_and_new_errors(qtbot, tmp_path, files):
+    w, _ = open_window(qtbot, tmp_path, *files)
+    assert not w.errors_box.isChecked() and not w.reroll_button.isEnabled()
+    assert not any(x.typing_errors for x in w.merge.letters)
+    check_only(w, [2, 4])
+    w.error_rate.setValue(10)
+    w.errors_box.setChecked(True)  # reloads with errors
+    assert w.reroll_button.isEnabled()
+    assert all(x.typing_errors for x in w.merge.letters)
+    assert checked(w) == [2, 4]  # the user's checks survive the reload
+    w.table.selectRow(1)
+    letter = w.selected_letter()
+    assert any(c.over for page in letter.pages for line in page.lines for c in line.cells)
+
+    before = [x.paragraphs for x in w.merge.letters]
+    w.reroll_button.click()  # the selected letter (2) only
+    after = [x.paragraphs for x in w.merge.letters]
+    assert after[1] != before[1] and after[0] == before[0] and after[2:] == before[2:]
+    assert w.selected_letter().number == 2
+
+    w.reroll_all_action.trigger()
+    assert all(a != b for a, b in zip(after, [x.paragraphs for x in w.merge.letters], strict=True))
+
+    # the choices and the re-rolls come back in a new window
+    again = [x.paragraphs for x in w.merge.letters]
+    w.close()
+    w2, _ = open_window(qtbot, tmp_path, *files)
+    assert w2.errors_box.isChecked() and w2.error_rate.value() == 10
+    assert [x.paragraphs for x in w2.merge.letters] == again

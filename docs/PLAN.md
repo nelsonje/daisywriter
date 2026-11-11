@@ -130,18 +130,20 @@ Each problem becomes an `Issue(level=error|warning, location, message)`, shown i
 - **Body zone:** info showing which paragraphs are body and how they were found (markers or auto-detection). A warning if typing errors are on but no body was found.
 
 ## 7. Simulated typing errors (`errors.py`)
-- Errors are only applied to **body-region text that is not merge-field output** by default, so a recipient's name is never misspelled. They never apply to headers, footers, the date, the address, or the signature.
-- Error types are weighted:
-  - adjacent-key substitution (QWERTY neighbor map)
-  - doubled letter
+- Errors are only applied to **body-region text that is not merge-field output**, so a recipient's name is never misspelled. They never apply to headers, footers, the date, the address, or the signature, nor to the first or last word of a paragraph, nor to words shorter than 3 letters.
+- Error types, weighted 40/25/20/15 %:
+  - adjacent-key substitution (QWERTY neighbor map; never at an `x`, whose correction would look like an x-out)
   - transposition
+  - doubled letter
   - skipped letter
-- Strikeover rendering uses the **column overprint** the typewriter does naturally. The style is a setting: `xout`, `overstrike`, or **`mix` (default, chosen at random per error with the seeded RNG)**.
-  - **x-out**: type the wrong part of the word, BS over it typing `x`, then continue with the correct word. This uses extra columns.
-  - **overstrike in place**: the correct letter is struck on top of the wrong one, with the same width. This only works for substitution errors; the other error types fall back to x-out.
-- **Ordering:** errors are injected **before** layout, so wrapping accounts for any extra columns.
-- **Rate:** a setting such as "about N errors per letter" or "per 100 words", with a minimum spacing between errors and none in the first or last word of a paragraph.
-- **Reproducible:** each letter gets a stored seed, so a reprint shows the same errors, and the preview matches what prints. There's also a "re-roll errors" button.
+- Corrections use the **column overprint** the typewriter does naturally. The style is a setting: `xout`, `overstrike`, or **`mix` (default: substitutions are overstruck or x-ed out at random, the rest x-ed out)**.
+  - **x-out**: the word is typed with the mistake up to a letter or two past it (or its end), each of those characters is struck over with `x`, and the word follows, typed correctly after a space. This uses extra columns.
+  - **overstrike in place**: the right letter is struck over the wrong one, same width. Only for substitutions; the other kinds fall back to x-out.
+  - In the model, `Span.over` / `Cell.over` hold the characters struck over each character. The renderer types them in left-to-right passes like underscores; the emulator, the GUI preview and the PDF show both characters on top of each other; text previews show the character on top.
+- **Ordering:** errors are injected after the merge and **before** layout, so wrapping accounts for the extra columns.
+- **Rate:** about N errors per 100 words of body text (default 1), with at least 12 words between errors.
+- **Reproducible:** each letter's seed comes from the template name, the spreadsheet row and its values, plus salts saved in the session file: one for all letters and one per letter. "New errors" (the selected letter) and Letters > New Typing Errors for All Letters change them, so a reprint shows the same errors as the preview unless re-rolled. The CLI (`--typing-errors [RATE]`, `--error-style`) reads the same salts.
+- Each letter lists its errors as an info issue ("typing errors: teh (xout), ..."); a warning says when errors are on but the body wasn't found.
 
 ## 8. Layout (`layout.py`)
 - Profile values:
@@ -220,7 +222,7 @@ line_pause_s = 0.0
 2. **Typewriter output:** ✅ profiles, render, job, pyusb transport (Mac), the emulated typewriter, and `print`/`testpage` in the CLI. Printing works from macOS on the Swintec; see §16 for results and §16.1 for the checks left for the next session with the typewriter.
 3. **GUI:** 🔶 branch `phase3-gui`. PySide6 window (`gui/`), session persistence (`session.py`), the paper-prompt flow, printing on a background thread with Stop, and an emulator target that saves a PDF. The preview draws the emulated sheets, so it shows exactly what the bytes produce. Not yet tried by hand with the typewriter.
 4. **Windows:** usbprint ctypes transport, then hardware checks on Windows.
-5. **Typing errors:** errors.py plus preview and settings.
+5. **Typing errors:** 🔶 branch `phase5-errors`: `errors.py`, overstrike rendering, previews, CLI options, and the GUI controls (checkbox, rate, style, New errors). Not yet seen on paper.
 6. **Packaging:** PyInstaller spec, WiX MSI, GitHub Actions; check the installer on a clean Windows VM.
 7. **Later:** envelopes, and the additional machines in §15.
 
@@ -306,6 +308,8 @@ None of these block later phases; the emulator already passes the first four.
 - [ ] Off-line in the middle of a page (press ON LINE), then back on-line: the job waits or times out with a clear message and continues (or cancels cleanly).
 - [ ] Cable unplugged in the middle of a page: a clear error, no hang.
 - [ ] All five sample letters in one run: no timeouts or stalls over a long job.
+- [ ] Typing errors (`--typing-errors 5` or the window): x-outs and overstruck letters look like a typist's corrections on carbon film.
+- [ ] The window: print, Stop, and the paper prompts with the typewriter.
 
 ### Bold on carbon film
 Carbon film is fully black after the first strike, so re-striking in the same spot adds little. Bold needs wider strokes, which Diablo/Qume printers got by striking again 1/120 in to the side. Options considered for the Nakajima machines:

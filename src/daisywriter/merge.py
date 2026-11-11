@@ -28,6 +28,7 @@ class Letter:
     issues: list[I.Issue] = field(default_factory=list)
     page_number_text: str | None = None
     pages: list[Page] = field(default_factory=list)
+    typing_errors: list = field(default_factory=list)  # errors.TypingError
 
     def summary(self, fields: list[str] | None = None) -> str:
         """A short description, from the given columns or the first non-empty values."""

@@ -55,6 +55,7 @@ class Span:
     body: bool = False  # inside the letter body: typing errors allowed
     from_field: bool = False  # after merging: text came from a field value
     strike: bool = False  # strikethrough
+    over: str = ""  # typing-error correction struck over each character (errors.py)
 
 
 @dataclass

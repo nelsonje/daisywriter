@@ -7,11 +7,13 @@ import sys
 from pathlib import Path
 
 from . import issues as I
+from .errors import ErrorSettings
 from .layout import LayoutSettings, PageNumbers
 from .merge import MergeSettings
 from .pipeline import Merge, Settings, run
 from .preview import render_html, render_text
 from .profile import STOCKS, builtin_profiles, load_profile
+from .session import Session
 from .transports import TransportError
 from .values import DEFAULT_DATE
 
@@ -53,6 +55,11 @@ def _merge_args(p: argparse.ArgumentParser):
     p.add_argument("--page-numbers", choices=["off", "after-first", "all"], default="off")
     p.add_argument("--page-number-position", choices=["top", "bottom"], default="top")
     p.add_argument("--page-number-align", choices=["left", "center", "right"], default="center")
+    p.add_argument("--typing-errors", type=float, nargs="?", const=1.0, metavar="RATE",
+                   help="add typing errors with corrections to the letter body, about RATE per "
+                        "100 words (default 1); the same ones each time, re-rolled in the window")
+    p.add_argument("--error-style", choices=["mix", "xout", "overstrike"], default="mix",
+                   help="how errors are corrected (default: a mix)")
     p.add_argument("--page-number-format", default="- {page} -",
                    help="text with {page}; may use merge fields, e.g. "
                         "\"{{LastName}} - Page {page} - {{Today}}\"")
@@ -65,7 +72,12 @@ def _settings(a) -> Settings:
                             justify=not a.no_justify, page_numbers=pn)
     merge = MergeSettings(today=a.today or dt.date.today(), default_date=a.date_format,
                           excel_formats=not a.ignore_excel_formats)
-    return Settings(profile=a.profile, sheet=a.sheet, merge=merge, layout=layout)
+    errors = ErrorSettings()
+    if a.typing_errors is not None:
+        session = Session.load(a.data)  # the window's re-rolls
+        errors = ErrorSettings(enabled=True, rate=a.typing_errors, style=a.error_style,
+                               salt=session.salt, letter_salts=session.salts)
+    return Settings(profile=a.profile, sheet=a.sheet, merge=merge, layout=layout, errors=errors)
 
 
 def _run(a) -> Merge:

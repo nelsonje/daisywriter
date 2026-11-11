@@ -2,7 +2,8 @@
 
 Typewriters without bold or underline codes (the Nakajima machines) get them by
 typing a line in passes: the text, then CR and passes with bold re-strikes,
-underscores and strikethrough marks. A bold re-strike pass can run right to
+underscores, strikethrough marks and typing-error corrections (x-outs, or the
+right letter struck over a wrong one). A bold re-strike pass can run right to
 left (see bold_restrikes); the other marks share left-to-right passes where
 their columns are free. CR returns to the left margin without feeding, and leading
 spaces become carrier moves, so extra passes cost one carriage return each.
@@ -52,15 +53,17 @@ def bold_restrikes(profile: Profile) -> list[str]:
 
 def _overprint_passes(cells: list[Cell], profile: Profile) -> list[tuple[str, str]]:
     """(direction, text) passes after the text. Bold cells are re-struck once in
-    each bold_restrikes pass. Underscores and strikethrough marks then go into
-    the first left-to-right pass that is free at their column, or new ones."""
+    each bold_restrikes pass. Underscores, strikethrough marks and corrections
+    then go into the first left-to-right pass that is free at their column, or
+    new ones."""
     bold = _codes(profile, "bold") is None  # overstrike bold
     under = _codes(profile, "underline") is None  # overprint underline
     mark = profile.raw.get("strikethrough", "-")
     ways = bold_restrikes(profile) if bold and any(c.bold and c.ch != " " for c in cells) else []
     grid = [[c.ch if c.bold and c.ch != " " else " " for c in cells] for _ in ways]
     for i, c in enumerate(cells):
-        for m in ("_" if under and c.underline else "", mark if c.strike else ""):
+        # then the typing-error corrections struck over it (an x, or the right letter)
+        for m in ("_" if under and c.underline else "", mark if c.strike else "", *c.over):
             if not m:
                 continue
             k = next((k for k, w in enumerate(ways) if w == "left" and grid[k][i] == " "), None)

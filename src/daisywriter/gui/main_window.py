@@ -21,6 +21,7 @@ from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
     QDateEdit,
+    QDoubleSpinBox,
     QFileDialog,
     QGridLayout,
     QHBoxLayout,
@@ -41,6 +42,7 @@ from PySide6.QtWidgets import (
 )
 
 from .. import issues as I
+from ..errors import ErrorSettings
 from ..job import PrintOptions
 from ..layout import LayoutSettings, PageNumbers
 from ..merge import Letter, MergeSettings
@@ -119,6 +121,24 @@ class MainWindow(QMainWindow):
         reload_button.setToolTip("read the template and data again (F5)")
         reload_button.clicked.connect(self.reload)
         for w in (QLabel("Date"), self.today_edit, self.page_numbers, self.justify):
+            options.addWidget(w)
+        options.addSpacing(16)
+        self.errors_box = QCheckBox("Typing errors")
+        self.errors_box.setToolTip("add typing errors with strikeover corrections to the letter body, "
+                                   "never in merged values; the same ones each time you print")
+        self.error_rate = QDoubleSpinBox(decimals=1, minimum=0.5, maximum=10, singleStep=0.5, value=1.0)
+        self.error_rate.setSuffix(" per 100 words")
+        self.error_style = QComboBox()
+        for label, style in [("x-outs and overstrikes", "mix"), ("x-outs only", "xout"),
+                             ("overstrikes where possible", "overstrike")]:
+            self.error_style.addItem(label, style)
+        self.reroll_button = QPushButton("New errors")
+        self.reroll_button.setToolTip("different typing errors for the selected letter")
+        self.reroll_button.clicked.connect(lambda: self.reroll(all_letters=False))
+        self.errors_box.toggled.connect(self._errors_changed)
+        self.error_rate.editingFinished.connect(self._errors_changed)
+        self.error_style.activated.connect(lambda _: self._errors_changed())
+        for w in (self.errors_box, self.error_rate, self.error_style, self.reroll_button):
             options.addWidget(w)
         options.addStretch(1)
         options.addWidget(reload_button)
@@ -215,15 +235,20 @@ class MainWindow(QMainWindow):
                      lambda: self._browse(self.data_edit, "Excel (*.xlsx)"))
         self._action(file_menu, "&Reload", ["F5", "Ctrl+R"], self.reload)
         file_menu.addSeparator()
-        self.print_action = self._action(file_menu, "&Print Checked Letters",
-                                         "Ctrl+P", self.print_checked)
-        self.stop_action = self._action(file_menu, "&Stop Printing", "Ctrl+.", self.stop_printing)
-        self.stop_action.setEnabled(False)
-        file_menu.addSeparator()
         windows = sys.platform == "win32"
         self.quit_action = self._action(file_menu, "E&xit" if windows else "&Quit",
                                         "Alt+F4" if windows else "Ctrl+Q", self.close)
         self.quit_action.setMenuRole(QAction.MenuRole.QuitRole)
+        letters_menu = self.menuBar().addMenu("&Letters")
+        self.print_action = self._action(letters_menu, "&Print Checked Letters",
+                                         "Ctrl+P", self.print_checked)
+        self.stop_action = self._action(letters_menu, "&Stop Printing", "Ctrl+.", self.stop_printing)
+        self.stop_action.setEnabled(False)
+        letters_menu.addSeparator()
+        self.reroll_action = self._action(letters_menu, "&New Typing Errors for This Letter", None,
+                                          lambda: self.reroll(all_letters=False))
+        self.reroll_all_action = self._action(letters_menu, "New Typing Errors for &All Letters", None,
+                                              lambda: self.reroll(all_letters=True))
         help_menu = self.menuBar().addMenu("&Help")
         about = self._action(help_menu, "&About daisywriter", None, self._about)
         about.setMenuRole(QAction.MenuRole.AboutRole)
@@ -255,6 +280,15 @@ class MainWindow(QMainWindow):
         if i >= 0:
             self.profile_combo.setCurrentIndex(i)
         self._sheet_wanted = self.store.value("sheet", "", str)
+        for w in (self.errors_box, self.error_rate, self.error_style):
+            w.blockSignals(True)
+        self.errors_box.setChecked(self.store.value("errors", False, bool))
+        self.error_rate.setValue(self.store.value("error_rate", 1.0, float))
+        self.error_style.setCurrentIndex(max(0, self.error_style.findData(
+            self.store.value("error_style", "mix", str))))
+        for w in (self.errors_box, self.error_rate, self.error_style):
+            w.blockSignals(False)
+        self._enable_error_controls()
         self.reload()
 
     def _save_choices(self):
@@ -262,6 +296,9 @@ class MainWindow(QMainWindow):
         self.store.setValue("data", self.data_edit.text())
         self.store.setValue("profile", self.profile_combo.currentData())
         self.store.setValue("sheet", self.sheet_combo.currentText())
+        self.store.setValue("errors", self.errors_box.isChecked())
+        self.store.setValue("error_rate", self.error_rate.value())
+        self.store.setValue("error_style", self.error_style.currentData())
 
     def _browse(self, edit: QLineEdit, kind: str):
         start = edit.text() or self.data_edit.text() or self.template_edit.text() or str(Path.home())
@@ -297,14 +334,42 @@ class MainWindow(QMainWindow):
         if current in names:
             self.sheet_combo.setCurrentText(current)
 
-    def settings(self) -> Settings:
+    def settings(self, session: Session | None = None) -> Settings:
         today = self.today_edit.date()
+        errors = ErrorSettings(enabled=self.errors_box.isChecked(), rate=self.error_rate.value(),
+                               style=self.error_style.currentData(),
+                               salt=session.salt if session else 0,
+                               letter_salts=dict(session.salts) if session else {})
         return Settings(
             profile=self.profile_combo.currentData(),
             sheet=self.sheet_combo.currentText() or None,
             merge=MergeSettings(today=dt.date(today.year(), today.month(), today.day())),
             layout=LayoutSettings(justify=self.justify.isChecked(),
-                                  page_numbers=PageNumbers(self.page_numbers.currentData())))
+                                  page_numbers=PageNumbers(self.page_numbers.currentData())),
+            errors=errors)
+
+    # Typing errors
+
+    def _enable_error_controls(self):
+        on = self.errors_box.isChecked()
+        for w in (self.error_rate, self.error_style, self.reroll_button, self.reroll_action,
+                  self.reroll_all_action):
+            w.setEnabled(on)
+
+    def _errors_changed(self):
+        self._enable_error_controls()
+        self.reload()
+
+    def reroll(self, all_letters: bool):
+        """Different typing errors for the selected letter, or for every letter."""
+        letter = self.selected_letter()
+        if self.session is None or not self.errors_box.isChecked() or (letter is None and not all_letters):
+            return
+        if all_letters:
+            self.session.reroll()
+        else:
+            self.session.reroll(self.template_edit.text(), letter)
+        self.reload()
 
     # Loading
 
@@ -313,14 +378,15 @@ class MainWindow(QMainWindow):
             return  # don't change the letters while they're printing
         template, data = Path(self.template_edit.text()), Path(self.data_edit.text())
         selected = self.selected_letter()
+        kept = (self.checked_numbers(), self.table.rowCount()) if self.merge else None
         self.merge, self.session, self.load_error = None, None, ""
         if template.is_file() and data.is_file():
             if self.sheet_combo.count() == 0 or self.sheet_combo.property("file") != str(data):
                 self._fill_sheets(data)
                 self.sheet_combo.setProperty("file", str(data))
             try:
-                self.merge = run(template, data, self.settings())
                 self.session = Session.load(data)
+                self.merge = run(template, data, self.settings(self.session))
             except ValueError as e:
                 self.load_error = str(e)
             self._watch(template, data)
@@ -328,10 +394,11 @@ class MainWindow(QMainWindow):
         elif self.template_edit.text() or self.data_edit.text():
             missing = [str(p) for p in (template, data) if str(p) not in ("", ".") and not p.is_file()]
             self.load_error = ("not found: " + ", ".join(missing)) if missing else ""
-        self._fill_table(selected.number if selected else 1)
+        self._fill_table(selected.number if selected else 1, kept)
         self._fill_issues()
 
-    def _fill_table(self, select: int):
+    def _fill_table(self, select: int, kept: tuple[set[int], int] | None = None):
+        """kept: (checked letter numbers, row count) from before a reload."""
         self.table.setRowCount(0)
         letters = self.merge.letters if self.merge else []
         self.table.setRowCount(len(letters))
@@ -349,7 +416,12 @@ class MainWindow(QMainWindow):
             self.table.setItem(row, COL_ISSUES, self._issue_item(letter))
             self.table.setItem(row, COL_STATUS, QTableWidgetItem())
             self._show_status(letter)
-        self.check_where(lambda st: st != PRINTED)
+        if kept and kept[1] == len(letters):  # the same letters: keep the user's checks
+            for r in range(len(letters)):
+                state = Qt.CheckState.Checked if r + 1 in kept[0] else Qt.CheckState.Unchecked
+                self.table.item(r, COL_CHECK).setCheckState(state)
+        else:
+            self.check_where(lambda st: st != PRINTED)
         if letters:
             self.table.selectRow(min(select, len(letters)) - 1)
         else:
@@ -425,6 +497,10 @@ class MainWindow(QMainWindow):
         if not rows or not self.merge:
             return None
         return self.letter(self.table.item(rows[0].row(), COL_NUM).data(Qt.ItemDataRole.UserRole))
+
+    def checked_numbers(self) -> set[int]:
+        return {r + 1 for r in range(self.table.rowCount())
+                if self.table.item(r, COL_CHECK).checkState() == Qt.CheckState.Checked}
 
     def checked_letters(self) -> list[Letter]:
         if not self.merge:

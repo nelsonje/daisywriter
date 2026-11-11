@@ -22,6 +22,7 @@ class Cell:
     underline: bool = False
     body: bool = False
     strike: bool = False
+    over: str = ""  # characters struck over this one (typing-error corrections)
 
 
 BLANK = Cell(" ")
@@ -226,7 +227,7 @@ def _align(w: _Wrapped, align: Align, end_col: int, justify: bool, flip: bool) -
 def wrap_paragraph(p: Paragraph, profile: Profile, settings: LayoutSettings,
                    issues: list, where: str) -> list[tuple[Line, str]]:
     """Return (line, end) pairs; end is "page" where a forced page break follows."""
-    cells = [Cell(ch, s.bold, s.underline, s.body, s.strike) for s in p.spans for ch in s.text]
+    cells = [Cell(ch, s.bold, s.underline, s.body, s.strike, s.over) for s in p.spans for ch in s.text]
     if _is_empty(p):
         return [(Line([], p.index, p.role), "end")]
     wrapper = _Wrapper(p, profile, issues, where)

@@ -118,6 +118,8 @@ def expected_strikes(line: Line, profile) -> Counter:
             want[(col, "_")] += 1
         if c.strike:
             want[(col, mark)] += 1
+        for ch in c.over:  # typing-error corrections
+            want[(col, ch)] += 1
     return want
 
 
@@ -151,6 +153,15 @@ def test_round_trip_word_template(sample_dir, settings):
 
 def test_round_trip_generated_template(sample_dir, settings):
     round_trip(run(sample_dir / "letter-template.docx", sample_dir / "letter-data.xlsx", settings))
+
+
+def test_round_trip_with_typing_errors(sample_dir, settings):
+    from daisywriter.errors import ErrorSettings
+    settings.errors = ErrorSettings(enabled=True, rate=20)
+    m = run(HERE / "fixtures" / "word-letter.docx", sample_dir / "letter-data.xlsx", settings)
+    assert all(x.typing_errors for x in m.letters)
+    e = round_trip(m)
+    assert any(st.ch == "x" for st in e.sheets[0].strikes)
 
 
 def test_round_trip_multi_page(sample_dir, settings, tmp_path):

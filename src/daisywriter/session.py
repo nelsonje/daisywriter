@@ -6,6 +6,9 @@ can see what's done and print the rest. Letters are matched by template name,
 spreadsheet row and the row's values: editing a row makes its letter "not
 printed" again. A letter whose content changed for another reason (the
 template text, today's date) keeps its status but is flagged as changed.
+
+It also keeps the typing-error salts: re-rolling gives one letter, or all of
+them, new errors, and the same errors come back the next time.
 """
 from __future__ import annotations
 
@@ -57,6 +60,8 @@ class LetterState:
 class Session:
     path: Path
     letters: dict[str, LetterState] = field(default_factory=dict)
+    salt: int = 0  # typing errors: re-rolls of every letter
+    salts: dict[str, int] = field(default_factory=dict)  # re-rolls of single letters
     problem: str = ""  # set when an existing file couldn't be read
 
     @classmethod
@@ -68,18 +73,30 @@ class Session:
         try:
             raw = json.loads(path.read_text(encoding="utf-8"))
             s.letters = {k: LetterState(**v) for k, v in raw.get("letters", {}).items()}
+            s.salt = int(raw.get("salt", 0))
+            s.salts = {k: int(v) for k, v in raw.get("salts", {}).items()}
         except (OSError, ValueError, TypeError) as e:
             s.problem = f"couldn't read {path.name} ({e}); print statuses start fresh"
         return s
 
     def save(self) -> None:
-        data = {"version": VERSION, "letters": {k: asdict(v) for k, v in sorted(self.letters.items())}}
+        data = {"version": VERSION, "letters": {k: asdict(v) for k, v in sorted(self.letters.items())},
+                "salt": self.salt, "salts": dict(sorted(self.salts.items()))}
         tmp = self.path.with_name(self.path.name + ".tmp")
         tmp.write_text(json.dumps(data, indent=1), encoding="utf-8")
         os.replace(tmp, self.path)
 
     def state(self, template: str | Path, letter: Letter) -> LetterState:
         return self.letters.get(letter_key(template, letter), LetterState())
+
+    def reroll(self, template: str | Path | None = None, letter: Letter | None = None) -> None:
+        """New typing errors for one letter, or for all of them."""
+        if letter is None:
+            self.salt += 1
+        else:
+            key = letter_key(template, letter)
+            self.salts[key] = self.salts.get(key, 0) + 1
+        self.save()
 
     def mark(self, template: str | Path, letter: Letter, status: str, message: str = "") -> LetterState:
         st = LetterState(status, dt.datetime.now().isoformat(timespec="seconds"),

@@ -5,12 +5,14 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from . import issues as I
+from .errors import ErrorSettings, add_typing_errors, seed_for
 from .layout import LayoutSettings, layout_letter
 from .merge import Letter, MergeSettings, merge_letter, merge_text
 from .model import Template
 from .profile import STOCKS, Profile, load_profile
 from .records import DataSet, load_records, normalize
 from .region import apply_regions
+from .session import letter_key
 from .template import load_template
 
 
@@ -21,6 +23,7 @@ class Settings:
     merge: MergeSettings = field(default_factory=MergeSettings)
     layout: LayoutSettings = field(default_factory=LayoutSettings)
     closings: list[str] = field(default_factory=list)  # extra complimentary closes (regexes)
+    errors: ErrorSettings = field(default_factory=ErrorSettings)
 
 
 @dataclass
@@ -79,11 +82,22 @@ def run(template_path: str | Path, data_path: str | Path, settings: Settings | N
     issues = list(template.issues) + list(dataset.issues)
     issues += check_fields(template, dataset)
     issues += check_profile(profile, settings)
+    has_body = any(s.body for p in template.paragraphs for s in p.spans)
+    if settings.errors.enabled and not has_body:
+        issues.append(I.warning("typing errors are on, but the letter body wasn't found, so none are added",
+                                "template"))
 
     pn = settings.layout.page_numbers
     letters = []
     for n, record in enumerate(dataset.records, start=1):
         letter = merge_letter(n, template, record, dataset, profile, settings.merge)
+        if settings.errors.enabled and has_body:
+            seed = seed_for(letter_key(template_path, letter), settings.errors)
+            letter.paragraphs, letter.typing_errors = add_typing_errors(
+                letter.paragraphs, settings.errors, seed)
+            if letter.typing_errors:
+                listed = ", ".join(f"{e.typed} ({e.style})" for e in letter.typing_errors)
+                letter.issues.append(I.info(f"typing errors: {listed}", f"letter {n} (row {record.row})", n))
         if pn.mode != "off":
             letter.page_number_text = merge_text(pn.format, record, dataset, settings.merge)
         letter.pages, layout_issues = layout_letter(

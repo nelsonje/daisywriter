@@ -41,6 +41,12 @@ def test_strikethrough_is_overtyped():
     assert passes(both, SWINTEC) == 4
 
 
+def test_corrections_are_overtyped():
+    line = Line(cells("the ") + [Cell(ch, over="x") for ch in "tje"] + cells(" the ")
+                + cells("w") + [Cell("r", over="e")] + cells("b"))
+    assert render_line(line, SWINTEC) == b"the tje the wrb\r    xxx      e\n"
+
+
 def test_charset_mapping_and_shift_out_runs():
     assert encode("50°", OLYMPIA) == b"50>"
     # adjacent shift-out characters share one SO ... SI
