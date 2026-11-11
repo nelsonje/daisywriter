@@ -48,19 +48,29 @@ jobs:
           wix build packaging/daisywriter.wxs -arch x64 -bindpath app=dist/daisywriter `
             -d Version=$version -o "dist/daisywriter-$version-x64.msi"
           if ($LASTEXITCODE) { exit 1 }
+          Get-Item "dist/daisywriter-$version-x64.msi" | Format-Table Name, Length
           "MSI=dist/daisywriter-$version-x64.msi" >> $env:GITHUB_ENV
       - name: Install, run and uninstall
         run: |
           function Check($what) { if ($LASTEXITCODE) { throw "$what failed ($LASTEXITCODE)" } }
           $msi = (Resolve-Path $env:MSI).Path
-          $p = Start-Process msiexec -ArgumentList "/i `"$msi`" /qn /l*v install.log" -Wait -PassThru
-          if ($p.ExitCode) { Get-Content install.log -Tail 40; throw "install failed ($($p.ExitCode))" }
+          function Msi($arguments) {
+            # Start-Process -Wait can lose msiexec's exit code; read it from the process instead
+            $p = Start-Process msiexec.exe -ArgumentList $arguments -PassThru
+            $p.WaitForExit()
+            return $p.ExitCode
+          }
+          $code = Msi "/i `"$msi`" /qn /l*v `"$env:RUNNER_TEMP\install.log`""
+          "msiexec /i exit code: $code"
+          if ($code -ne 0) { Get-Content "$env:RUNNER_TEMP\install.log" -Tail 60; throw "install failed ($code)" }
           $dir = Join-Path $env:ProgramFiles "daisywriter"
           $cli = Join-Path $dir "daisywriter-cli.exe"
           Get-ChildItem $dir -ErrorAction SilentlyContinue | Select-Object -First 10 | Format-Table Name, Length
           if (-not (Test-Path $cli)) {
             Get-ChildItem $env:ProgramFiles, ${env:ProgramFiles(x86)} -Filter "daisywriter*" -Recurse -Depth 2 `
               -ErrorAction SilentlyContinue | Select-Object -First 10 FullName
+            Select-String -Path "$env:RUNNER_TEMP\install.log" -Pattern "INSTALLFOLDER|daisywriter-cli|Return value 3" |
+              Select-Object -First 20 | ForEach-Object Line
             throw "daisywriter-cli.exe isn't in $dir"
           }
           $work = Join-Path $env:RUNNER_TEMP "smoke"
@@ -77,8 +87,8 @@ jobs:
           if (-not (Test-Path $shortcut)) { throw "no Start menu shortcut" }
           $path = [Environment]::GetEnvironmentVariable("PATH", "Machine")
           if (-not $path.Contains($dir)) { throw "not on PATH" }
-          $p = Start-Process msiexec -ArgumentList "/x `"$msi`" /qn" -Wait -PassThru
-          if ($p.ExitCode) { throw "uninstall failed ($($p.ExitCode))" }
+          $code = Msi "/x `"$msi`" /qn"
+          if ($code -ne 0) { throw "uninstall failed ($code)" }
           if (Test-Path $dir) { throw "the install folder is still there" }
           if (Test-Path $shortcut) { throw "the shortcut is still there" }
       - uses: actions/upload-artifact@v7
