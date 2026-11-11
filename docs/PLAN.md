@@ -73,7 +73,7 @@ src/daisywriter/
   preview.py        # Page → plain/ANSI text or HTML preview
   render.py         # Page → bytes per Profile (phase 2)
   profiles/         # *.toml + loader (dataclass)
-  transports/       # base.py, pyusb.py, usbprint.py (Windows), file.py (dry-run)
+  transports/       # base.py, pyusb.py, usbprint.py (Windows), file.py (dry-run), emulator.py
   job.py            # send loop: chunk after LF/FF, per-line timeout, line pause, progress + pause-for-paper callbacks
   session.py        # a merge run: letters, print status per letter, seeds; saved as JSON next to the data file
   cli.py            # validate | preview | print [--letters 1,4-6] | status | init | test
@@ -202,6 +202,7 @@ line_pause_s = 0.0
   - **Windows:** SetupAPI enumeration of `GUID_DEVINTERFACE_USBPRINT`, `CreateFileW`, overlapped `WriteFile` with `CancelIoEx` for timeouts, plus `IOCTL_USBPRINT_GET_LPT_STATUS` (0x220030) and `IOCTL_USBPRINT_SOFT_RESET` (0x220040).
   - **macOS/Linux:** pyusb, lifted from `cmpprint.py`.
   - **Dry run:** writes the bytes to a file.
+  - **Emulator** (`transports/emulator.py`, `--emulate out.pdf`): a model of the Nakajima firmware (line buffer, CR/LF/BS/SO/SI/CAN/ESC, auto-wrap at the right margin, sheet loading and ejecting) that types onto virtual sheets and draws them as a true-size PDF (`pdf.py`, no dependencies). It reports firmware wraps, typing off the sheet, sheets still in the rollers, text left in the buffer, and cases the firmware notes leave open (spaces just before BS/ESC/SO/SI). It shows what we *think* the machine does; ink and darkness still need paper.
 
 ## 11. GUI (PySide6)
 - **Top:** Template [Browse], Data [Browse] + sheet picker, Typewriter profile dropdown, typewriter status light.
@@ -211,7 +212,7 @@ line_pause_s = 0.0
 
 ## 12. Phases
 1. **Core, no hardware:** ✅ done (branch `phase1-core`). model, template, records, validate, merge, layout, preview, and the `validate`/`preview` CLI. Tests use fixture docx/xlsx files (including a split-run placeholder and a complex MERGEFIELD).
-2. **Typewriter output:** 🔶 printing works from macOS (branch `phase2-print`); see §16 for hardware results. Still to check on paper: the longer eject, bold from the right in a letter, letter 2 (blank address lines dropped), and a two-page letter. profiles, render, job, and pyusb transport (Mac). Golden byte tests; hardware checks on the Swintec. `print` in the CLI.
+2. **Typewriter output:** 🔶 printing works from macOS (branch `phase2-print`); see §16 for hardware results. Still to check on paper: the longer eject, bold from the right in a letter, letter 2 (blank address lines dropped), and a two-page letter. All four pass on the emulator. profiles, render, job, and pyusb transport (Mac). Golden byte tests; hardware checks on the Swintec. `print` in the CLI.
 3. **GUI:** PySide6 window, session persistence, the paper-prompt flow.
 4. **Windows:** usbprint ctypes transport, then hardware checks on Windows.
 5. **Typing errors:** errors.py plus preview and settings.
@@ -229,6 +230,7 @@ line_pause_s = 0.0
 | Golden previews | Plain-text preview of every fixture letter, checked in; layout changes show as diffs. Regenerate with `uv run pytest tests/test_golden.py --update-golden` and review the diff. | `tests/golden/`, `test_golden.py` |
 | Properties (Hypothesis) | Wrapping never exceeds the margins, loses or reorders text, or drops formatting; justified lines are full width. Pagination never overfills a page, keeps order, starts no page with a blank line, and leaves ≥2 lines on each side of a split. | `test_properties.py` |
 | End-to-end | Template + data → letters through `pipeline.run` and the CLI | `test_pipeline.py`, `test_cli.py` |
+| Emulated typewriter | Every golden letter rendered to bytes, sent through the print job to the firmware model, and compared strike by strike with the layout (characters, re-strikes, underscores, hyphens); no firmware wrap; every sheet fed past the rollers. | `test_emulator.py` |
 | Hardware | `@pytest.mark.hardware`, skipped unless `--hardware` | from phase 2 |
 
 ### Added by later phases

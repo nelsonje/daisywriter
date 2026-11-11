@@ -89,6 +89,8 @@ def print_letters(transport: Transport, letters: list[Letter], profile: Profile,
                         f"Insert a sheet for {where} until the rollers above the printing "
                         "point catch it, then continue?"):
                     raise PrintCancelled()
+                if opts.paper == "single_sheet" and hasattr(transport, "load_sheet"):
+                    transport.load_sheet()  # the emulator needs to know
                 wait_ready(transport, ask)
                 report(f"typing {where}")
                 print_page(transport, page, profile, opts, report, "  ")

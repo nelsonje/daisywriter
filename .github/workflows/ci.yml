@@ -22,3 +22,4 @@ jobs:
           uv run daisywriter make-samples samples
           uv run daisywriter validate samples/letter-template.docx samples/letter-data.xlsx
           uv run daisywriter preview samples/letter-template.docx samples/letter-data.xlsx --letters 1 > preview.txt
+          uv run daisywriter print samples/letter-template.docx samples/letter-data.xlsx --letters 1 -y --emulate letter.pdf

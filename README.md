@@ -24,6 +24,7 @@ uv run daisywriter status                          # is the typewriter connected
 uv run daisywriter testpage margins format bold    # calibration patterns
 uv run daisywriter print samples/letter-template.docx samples/letter-data.xlsx --letters 1
 uv run daisywriter print ... --dry-run out.bin     # write the bytes to a file instead
+uv run daisywriter print ... --emulate out.pdf     # type on an emulated typewriter; draw the sheets
 ```
 Before each page, insert a sheet until the rollers above the printing point catch it, with
 the typewriter ON LINE. daisywriter feeds to the 1-inch top margin, types the page, then

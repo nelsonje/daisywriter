@@ -132,7 +132,10 @@ def _print_args(p: argparse.ArgumentParser, merge: bool):
     if not merge:
         p.add_argument("--profile", help="typewriter profile id or .toml path (see 'profiles')")
         p.add_argument("--top", type=int, default=6, help="lines fed before the first typed line")
-    p.add_argument("--dry-run", metavar="FILE", help="write the bytes to FILE instead of printing")
+    out = p.add_mutually_exclusive_group()
+    out.add_argument("--dry-run", metavar="FILE", help="write the bytes to FILE instead of printing")
+    out.add_argument("--emulate", metavar="PDF", type=Path,
+                     help="type onto an emulated typewriter and draw the sheets as a PDF")
     p.add_argument("--no-eject", action="store_true",
                    help="don't feed single sheets out after the last line")
     p.add_argument("--line-pause", type=float, metavar="S",
@@ -144,6 +147,9 @@ def _print_args(p: argparse.ArgumentParser, merge: bool):
 
 def _open(profile, a):
     from .transports import open_transport
+    if getattr(a, "emulate", None):
+        from .transports.emulator import Emulator
+        return Emulator(profile, a.paper, getattr(a, "stock", None) or "letter")
     try:
         t = open_transport(profile, a.dry_run)
     except TransportError as e:
@@ -170,8 +176,20 @@ def _send(t, letters, profile, opts, a) -> int:
         return 1
     finally:
         t.close()
+        if getattr(a, "emulate", None):
+            _emulated(t, a)
     print(f"done: {len(done)} letter(s) sent" + (f" to {a.dry_run}" if a.dry_run else ""))
     return 0
+
+
+def _emulated(t, a):
+    from .pdf import write_pdf
+    write_pdf(a.emulate, t.sheets, getattr(a, "stock", None) or "letter")
+    print(f"wrote {a.emulate} ({len(t.sheets)} sheet(s))")
+    for e in t.events:
+        print(f"emulator: {e}")
+    if not t.events:
+        print("emulator: no problems (no firmware wraps, every sheet fed out)")
 
 
 def _options(profile, a, top):
