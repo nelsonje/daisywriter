@@ -57,6 +57,12 @@ jobs:
           if ($p.ExitCode) { Get-Content install.log -Tail 40; throw "install failed ($($p.ExitCode))" }
           $dir = Join-Path $env:ProgramFiles "daisywriter"
           $cli = Join-Path $dir "daisywriter-cli.exe"
+          Get-ChildItem $dir -ErrorAction SilentlyContinue | Select-Object -First 10 | Format-Table Name, Length
+          if (-not (Test-Path $cli)) {
+            Get-ChildItem $env:ProgramFiles, ${env:ProgramFiles(x86)} -Filter "daisywriter*" -Recurse -Depth 2 `
+              -ErrorAction SilentlyContinue | Select-Object -First 10 FullName
+            throw "daisywriter-cli.exe isn't in $dir"
+          }
           $work = Join-Path $env:RUNNER_TEMP "smoke"
           & $cli profiles; Check "profiles"
           & $cli make-samples $work; Check "make-samples"
