@@ -6,10 +6,9 @@
   window, and puts the folder on PATH so daisywriter-cli works in a terminal.
   Installing a newer version replaces the old one (MajorUpgrade).
 
-  Build (on Windows, after PyInstaller):
-    dotnet tool install --global wix --version 5.0.2
-    wix build packaging/daisywriter.wxs -arch x64 -bindpath app=dist/daisywriter ^
-        -d Version=0.1.0 -o dist/daisywriter-0.1.0-x64.msi
+  Build it on Windows after PyInstaller, with WiX 5.0.2 installed as a dotnet
+  tool; the installer job in .github/workflows/ci.yml has the exact commands.
+  (XML comments can't contain two hyphens in a row, so they aren't copied here.)
 
   The UpgradeCode must never change: Windows uses it to recognise earlier versions.
 -->
