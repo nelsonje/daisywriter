@@ -2,7 +2,12 @@
 Tools for printing to daisywheel typewriters: mail merge from a Word template
 and an Excel spreadsheet onto a typewriter, one typed letter per row.
 
-See [docs/PLAN.md](docs/PLAN.md) for the design and roadmap.
+**Using daisywriter:** see the [user guide](src/daisywriter/gui/user_guide.md)
+(also in the app under Help). Releases with installers for Windows and Mac are on
+the [Releases](https://github.com/nelsonje/daisywriter/releases) page.
+
+For the design and roadmap, see [docs/PLAN.md](docs/PLAN.md); to make a release,
+[docs/releases](docs/releases/README.md).
 
 ## Status
 Phases 1, 2, 3 and 5 are done: read the template and spreadsheet, validate
@@ -14,8 +19,8 @@ installer (phase 6) are written and tested in CI, but not yet with the
 typewriter.
 
 ## Install on Windows
-Each CI run on GitHub builds an installer: open the run under Actions, download
-the `daisywriter-msi` artifact, unzip it and run the `.msi`. It installs
+Download the `.msi` from the [latest release](https://github.com/nelsonje/daisywriter/releases)
+(or, for a development build, the `daisywriter-msi` artifact of a CI run) and run it. It installs
 daisywriter for all users (Windows asks for permission, and warns that the
 publisher is unknown because the installer isn't signed yet), adds daisywriter
 to the Start menu, and puts `daisywriter-cli` on the PATH for the command line.
@@ -30,11 +35,13 @@ wix build packaging/daisywriter.wxs -arch x64 -wx -bindpath app=<full path to di
 ```
 
 ## Install on a Mac
-Each CI run also builds a disk image for Apple-silicon Macs: download the
-`daisywriter-dmg` artifact, unzip it, open the `.dmg` and drag daisywriter to
+Download the `.dmg` for Apple-silicon Macs from the latest release (or the
+`daisywriter-dmg` artifact of a CI run), open it and drag daisywriter to
 Applications. The app isn't signed yet, so the first time macOS refuses to open
 it: open it once, then go to System Settings > Privacy & Security and choose
-Open Anyway. libusb comes inside the app; nothing else needs installing.
+Open Anyway. A Mac managed by an employer or school that only allows apps from
+identified developers won't open it at all until it's signed and notarized.
+libusb comes inside the app; nothing else needs installing.
 
 For the command line, link it onto your PATH:
 ```sh

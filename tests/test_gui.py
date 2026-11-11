@@ -270,3 +270,10 @@ def test_window_icon(qtbot, tmp_path, files):
     w, _ = open_window(qtbot, tmp_path, *files)
     sizes = {s.width() for s in w.windowIcon().availableSizes()}
     assert {16, 32, 48, 256} <= sizes
+
+
+def test_user_guide(qtbot, tmp_path, files):
+    w, _ = open_window(qtbot, tmp_path, *files)
+    w.guide_action.trigger()
+    browser = w._guide.findChild(__import__("PySide6.QtWidgets", fromlist=["QTextBrowser"]).QTextBrowser)
+    assert w._guide.isVisible() and "Set up the typewriter" in browser.toPlainText()

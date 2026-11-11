@@ -225,6 +225,7 @@ line_pause_s = 0.0
 5. **Typing errors:** ✅ `errors.py`, overstrike rendering, previews, CLI options (`--typing-errors`, `--error-style`) and the window's controls; see §7. Not yet seen on paper (§16.1).
 6. **Packaging:** ✅ `packaging/daisywriter.spec` (PyInstaller) freezes two programs into one folder: `daisywriter.exe` (the window, no console) and `daisywriter-cli.exe`. `packaging/daisywriter.wxs` (WiX 5.0.2; v6+ needs the Open Source Maintenance Fee EULA) packs it into a per-machine MSI (Program Files\daisywriter, a Start menu shortcut, the folder on PATH, upgrades replace older versions). CI builds it on Windows, installs it silently, runs both programs, checks the shortcut and PATH, uninstalls, and uploads the MSI (about 41 MB) as an artifact. Installed and tried by hand on Windows (2026-11-11). The icon (a daisywheel on paper) is drawn by `packaging/make_icon.py` into `packaging/daisywriter.ico` and `gui/icons/`. Not yet: an installer UI beyond Windows' progress bar, and code signing (Windows warns about an unknown publisher; see §14).
 7. **Mac app:** 🔶 branch `macos-app`. The same spec builds `daisywriter.app` on macOS (both programs in `Contents/MacOS`, the `.icns` from `make_icon.py`, libusb from the `libusb-package` wheel so Homebrew isn't needed), and `packaging/make_dmg.sh` packs it in a drag-to-Applications disk image (about 45 MB, Apple silicon only). CI builds it, mounts the image, and runs both programs from it. Not signed or notarized: that needs the Apple Developer Program ($99/year; signed apps keep working after it lapses), and until then macOS needs Open Anyway in System Settings > Privacy & Security.
+8. **Alpha release:** 🔶 branch `alpha-release`. A user guide for non-technical users (`src/daisywriter/gui/user_guide.md`, shown under Help > User Guide, F1), and a `release` CI job: every push gathers the MSI and DMG under release names and checks for release notes; a tag `v<version>` matching `pyproject.toml` publishes them as a GitHub release (a pre-release before 1.0) with `docs/releases/v<version>.md`. First release: 0.1.0, for a friend with Windows and the Swintec. Before it: the Windows checks with the typewriter (§16.1).
 7. **Later:** envelopes, and the additional machines in §15.
 
 ## 13. Testing
@@ -323,6 +324,7 @@ None of these block later phases; the emulator already passes the first four.
 - [ ] Windows: off-line in the middle of a page gives the timeout message and the job cancels cleanly; the next job prints.
 - [x] Windows: install the MSI from CI on a real machine, start daisywriter from the Start menu, print to the emulator, uninstall. Done 2026-11-11, without the typewriter: all as expected.
 - [ ] Mac app: print from the installed app (its own libusb, not Homebrew's).
+  An unsigned app won't open at all on a Mac managed to allow only App Store and identified developers (2026-11-11, Jacob's work laptop): Open Anyway doesn't help. Signing and notarizing fixes that.
 - [ ] Windows: what an adapter stall looks like (PE high, as when the cable is loose on macOS), and whether `soft_reset()` recovers it without disturbing the typewriter.
 
 ### Bold on carbon film

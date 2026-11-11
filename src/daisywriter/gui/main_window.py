@@ -21,6 +21,7 @@ from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
     QDateEdit,
+    QDialog,
     QDoubleSpinBox,
     QFileDialog,
     QGridLayout,
@@ -35,6 +36,7 @@ from PySide6.QtWidgets import (
     QSplitter,
     QTableWidget,
     QTableWidgetItem,
+    QTextBrowser,
     QTreeWidget,
     QTreeWidgetItem,
     QVBoxLayout,
@@ -268,6 +270,7 @@ class MainWindow(QMainWindow):
         self.reroll_all_action = self._action(letters_menu, "New Typing Errors for &All Letters", None,
                                               lambda: self.reroll(all_letters=True))
         help_menu = self.menuBar().addMenu("&Help")
+        self.guide_action = self._action(help_menu, "daisywriter &User Guide", "F1", self.show_guide)
         about = self._action(help_menu, "&About daisywriter", None, self._about)
         about.setMenuRole(QAction.MenuRole.AboutRole)
 
@@ -279,6 +282,19 @@ class MainWindow(QMainWindow):
         action.triggered.connect(lambda _=False: slot())
         menu.addAction(action)
         return action
+
+    def show_guide(self):
+        if getattr(self, "_guide", None) is None:
+            text = (resources.files("daisywriter.gui") / "user_guide.md").read_text(encoding="utf-8")
+            self._guide = QDialog(self)
+            self._guide.setWindowTitle("daisywriter user guide")
+            browser = QTextBrowser(self._guide)
+            browser.setOpenExternalLinks(True)
+            browser.setMarkdown(text)
+            QVBoxLayout(self._guide).addWidget(browser)
+            self._guide.resize(760, 820)
+        self._guide.show()
+        self._guide.raise_()
 
     def _about(self):
         try:
