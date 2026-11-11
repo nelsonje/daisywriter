@@ -264,3 +264,9 @@ def test_header_checkbox(qtbot, tmp_path, files):
     assert checked(w) == [1, 2, 3, 4, 5]
     w.table.item(0, COL_CHECK).setCheckState(Qt.CheckState.Unchecked)
     assert header.state == Qt.CheckState.PartiallyChecked
+
+
+def test_window_icon(qtbot, tmp_path, files):
+    w, _ = open_window(qtbot, tmp_path, *files)
+    sizes = {s.width() for s in w.windowIcon().availableSizes()}
+    assert {16, 32, 48, 256} <= sizes

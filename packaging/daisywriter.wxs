@@ -18,6 +18,8 @@
     <MajorUpgrade DowngradeErrorMessage="A newer version of daisywriter is already installed." />
     <MediaTemplate EmbedCab="yes" />
     <Property Id="ARPCOMMENTS" Value="Mail merge from Word and Excel onto daisywheel typewriters" />
+    <Icon Id="daisywriter.ico" SourceFile="daisywriter.ico" />
+    <Property Id="ARPPRODUCTICON" Value="daisywriter.ico" />
 
     <StandardDirectory Id="ProgramMenuFolder" />
     <StandardDirectory Id="ProgramFiles64Folder">

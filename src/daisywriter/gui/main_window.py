@@ -11,11 +11,11 @@ import contextlib
 import datetime as dt
 import sys
 import zipfile
-from importlib import metadata
+from importlib import metadata, resources
 from pathlib import Path
 
 from PySide6.QtCore import QDate, QFileSystemWatcher, QSettings, Qt, QThread, QTimer, QUrl
-from PySide6.QtGui import QAction, QBrush, QColor, QDesktopServices, QKeySequence
+from PySide6.QtGui import QAction, QBrush, QColor, QDesktopServices, QIcon, QKeySequence
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QCheckBox,
@@ -56,6 +56,16 @@ from .sheet_view import PreviewArea
 from .worker import PrintWorker
 
 TYPEWRITER, EMULATOR = "typewriter", "emulator"
+
+
+def app_icon() -> QIcon:
+    """The daisywheel icon (packaging/make_icon.py draws it)."""
+    icon = QIcon()
+    icons = resources.files("daisywriter.gui") / "icons"
+    for size in (16, 32, 48, 256):
+        with resources.as_file(icons / f"daisywriter-{size}.png") as path:
+            icon.addFile(str(path))
+    return icon
 COL_CHECK, COL_NUM, COL_WHO, COL_PAGES, COL_ISSUES, COL_STATUS = range(6)
 LEVEL_COLORS = {I.Level.ERROR: QColor("#c62828"), I.Level.WARNING: QColor("#b26a00"),
                 I.Level.INFO: QColor("#555555")}
@@ -66,6 +76,7 @@ class MainWindow(QMainWindow):
     def __init__(self, settings: QSettings | None = None):
         super().__init__()
         self.setWindowTitle("daisywriter")
+        self.setWindowIcon(app_icon())
         self.store = settings or QSettings("daisywriter", "daisywriter")
         self.merge: Merge | None = None
         self.session: Session | None = None

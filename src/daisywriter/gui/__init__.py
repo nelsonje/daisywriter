@@ -9,10 +9,11 @@ def main(argv: list[str] | None = None) -> int:
     from PySide6.QtCore import QTimer
     from PySide6.QtWidgets import QApplication
 
-    from .main_window import MainWindow
+    from .main_window import MainWindow, app_icon
 
     app = QApplication.instance() or QApplication(sys.argv if argv is None else ["daisywriter", *argv])
     app.setApplicationName("daisywriter")
+    app.setWindowIcon(app_icon())  # also the Dock icon on macOS
     window = MainWindow()
     window.show()
     smoke = os.environ.get("DAISYWRITER_SMOKE_TEST")

@@ -47,7 +47,8 @@ jobs:
           $version = (uv version --short).Trim()
           $app = (Resolve-Path dist/daisywriter).Path  # WiX resolves a relative bindpath oddly
           # -wx: warnings are errors (a missing folder is only a warning, and gives an empty MSI)
-          wix build packaging/daisywriter.wxs -arch x64 -wx -bindpath "app=$app" `
+          $pkg = (Resolve-Path packaging).Path  # where WiX finds daisywriter.ico
+          wix build packaging/daisywriter.wxs -arch x64 -wx -bindpath "app=$app" -bindpath $pkg `
             -d Version=$version -o "dist/daisywriter-$version-x64.msi"
           if ($LASTEXITCODE) { exit 1 }
           $size = (Get-Item "dist/daisywriter-$version-x64.msi").Length

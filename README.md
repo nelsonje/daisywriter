@@ -26,7 +26,7 @@ To build it yourself on Windows:
 uv sync --group packaging
 uv run --group packaging pyinstaller packaging/daisywriter.spec --noconfirm
 dotnet tool install --global wix --version 5.0.2
-wix build packaging/daisywriter.wxs -arch x64 -wx -bindpath app=<full path to dist\daisywriter> -d Version=0.1.0 -o daisywriter.msi
+wix build packaging/daisywriter.wxs -arch x64 -wx -bindpath app=<full path to dist\daisywriter> -bindpath <full path to packaging> -d Version=0.1.0 -o daisywriter.msi
 ```
 
 ## Try it
