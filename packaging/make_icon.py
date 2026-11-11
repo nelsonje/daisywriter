@@ -2,16 +2,20 @@
 
 Renders PNGs at the sizes Windows uses and packs them into an .ico:
     uv run python packaging/make_icon.py
-writes src/daisywriter/gui/icons/daisywriter-<size>.png (the window icon) and
-packaging/daisywriter.ico (the programs, the Start menu and Settings > Apps).
+writes src/daisywriter/gui/icons/daisywriter-<size>.png (the window icon),
+packaging/daisywriter.ico (the Windows programs, the Start menu and Settings >
+Apps) and, on macOS, packaging/daisywriter.icns (the Mac app).
 Small sizes get fewer, thicker petals, so they stay readable.
 """
 from __future__ import annotations
 
 import math
 import os
+import shutil
 import struct
+import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
@@ -71,6 +75,33 @@ def draw(size: int) -> QImage:
     return img
 
 
+def draw_mac(size: int) -> QImage:
+    """macOS icons leave a margin around the artwork (Apple's grid puts the tile
+    at about 80 % of the canvas), or the icon looks too big in the Dock."""
+    inner = round(size * 0.84)
+    img = QImage(size, size, QImage.Format.Format_ARGB32_Premultiplied)
+    img.fill(Qt.GlobalColor.transparent)
+    p = QPainter(img)
+    p.drawImage((size - inner) // 2, (size - inner) // 2, draw(inner))
+    p.end()
+    return img
+
+
+def write_icns(path: Path) -> bool:
+    """A macOS .icns, with Apple's iconutil (macOS only)."""
+    iconutil = shutil.which("iconutil")
+    if not iconutil:
+        return False
+    with tempfile.TemporaryDirectory() as tmp:
+        iconset = Path(tmp) / "daisywriter.iconset"
+        iconset.mkdir()
+        for base in (16, 32, 128, 256, 512):
+            for scale, suffix in ((1, ""), (2, "@2x")):
+                (iconset / f"icon_{base}x{base}{suffix}.png").write_bytes(png_bytes(draw_mac(base * scale)))
+        subprocess.run([iconutil, "-c", "icns", str(iconset), "-o", str(path)], check=True)
+    return True
+
+
 def png_bytes(img: QImage) -> bytes:
     buf = QBuffer()
     buf.open(QIODevice.OpenModeFlag.WriteOnly)
@@ -102,6 +133,10 @@ def main() -> int:
             (icons / f"daisywriter-{size}.png").write_bytes(png)
     write_ico(ROOT / "packaging" / "daisywriter.ico", images)
     print(f"wrote {icons} and packaging/daisywriter.ico")
+    if write_icns(ROOT / "packaging" / "daisywriter.icns"):
+        print("wrote packaging/daisywriter.icns")
+    else:
+        print("skipped packaging/daisywriter.icns (needs macOS's iconutil)")
     return 0
 
 

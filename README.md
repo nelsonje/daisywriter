@@ -29,6 +29,20 @@ dotnet tool install --global wix --version 5.0.2
 wix build packaging/daisywriter.wxs -arch x64 -wx -bindpath app=<full path to dist\daisywriter> -bindpath <full path to packaging> -d Version=0.1.0 -o daisywriter.msi
 ```
 
+## Install on a Mac
+Each CI run also builds a disk image for Apple-silicon Macs: download the
+`daisywriter-dmg` artifact, unzip it, open the `.dmg` and drag daisywriter to
+Applications. The app isn't signed yet, so the first time macOS refuses to open
+it: open it once, then go to System Settings > Privacy & Security and choose
+Open Anyway. libusb comes inside the app; nothing else needs installing.
+
+For the command line, link it onto your PATH:
+```sh
+sudo ln -s /Applications/daisywriter.app/Contents/MacOS/daisywriter-cli /usr/local/bin/daisywriter-cli
+```
+To build it yourself: `uv run --group packaging pyinstaller packaging/daisywriter.spec --noconfirm`,
+then `packaging/make_dmg.sh`.
+
 ## Try it
 ```sh
 uv sync

@@ -100,3 +100,38 @@ jobs:
         with:
           name: daisywriter-msi
           path: dist/*.msi
+
+  macos-app:
+    # The Mac app: freeze with PyInstaller into daisywriter.app, pack it in a disk
+    # image, then mount the image and run both programs from it. Not signed yet.
+    needs: test
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.3.3
+      - run: uv sync --locked --group packaging
+      - name: Freeze (PyInstaller)
+        run: uv run --group packaging pyinstaller packaging/daisywriter.spec --noconfirm
+      - name: Disk image
+        run: echo "DMG=$(packaging/make_dmg.sh)" >> "$GITHUB_ENV"
+      - name: Run the app from the disk image
+        run: |
+          set -eux
+          mnt=$(mktemp -d)
+          hdiutil attach -nobrowse -readonly -mountpoint "$mnt" "$DMG"
+          app="$mnt/daisywriter.app/Contents/MacOS"
+          work=$(mktemp -d)
+          "$app/daisywriter-cli" profiles
+          # the bundled libusb loads: no adapter is plugged in, so "not found" (exit 1)
+          "$app/daisywriter-cli" status 2>&1 | tee "$work/status.txt" || true
+          grep -q "not found" "$work/status.txt"
+          "$app/daisywriter-cli" make-samples "$work/s"
+          "$app/daisywriter-cli" print "$work/s/letter-template.docx" "$work/s/letter-data.xlsx" \
+            --letters 1 -y --typing-errors 3 --emulate "$work/letter.pdf"
+          test -s "$work/letter.pdf"
+          DAISYWRITER_SMOKE_TEST=2 QT_QPA_PLATFORM=offscreen "$app/daisywriter"
+          hdiutil detach "$mnt"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: daisywriter-dmg
+          path: dist/*.dmg

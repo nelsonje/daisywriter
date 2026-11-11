@@ -8,6 +8,7 @@ authors = [
 ]
 requires-python = ">=3.12"
 dependencies = [
+    "libusb-package>=1.0 ; sys_platform == 'darwin'",
     "openpyxl>=3.1.5",
     "pyside6-essentials>=6.8",
     "python-docx>=1.2.0",

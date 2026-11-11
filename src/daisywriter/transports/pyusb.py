@@ -1,7 +1,8 @@
 """USB printer-class parallel adapters through libusb (macOS and Linux).
 
 Ported from ../olympia-compact-electronic-2/cmpprint.py (tested with a
-Prolific PL2305, 067b:2305). On Windows the inbox usbprint.sys driver owns these
+Prolific PL2305, 067b:2305). On macOS libusb comes from the libusb-package
+wheel, so it's inside the app; on Linux it's the system's. On Windows the inbox usbprint.sys driver owns these
 adapters, so Windows uses transports/usbprint.py instead.
 """
 from __future__ import annotations
@@ -9,6 +10,16 @@ from __future__ import annotations
 from .base import DeviceNotFound, PortStatus, TransportError, WriteStalled, WriteTimeout
 
 ENDPOINT_OUT = 0x01
+
+
+def _backend():
+    """The libusb that comes with the libusb-package wheel (macOS), so the app
+    doesn't need Homebrew; otherwise None, and pyusb looks for a system libusb."""
+    try:
+        import libusb_package
+    except ImportError:
+        return None
+    return libusb_package.get_libusb1_backend()
 
 
 class PyUsbTransport:
@@ -20,7 +31,7 @@ class PyUsbTransport:
             raise TransportError("pyusb isn't installed") from e
         self._usb = usb
         try:
-            dev = usb.core.find(idVendor=vid, idProduct=pid)
+            dev = usb.core.find(idVendor=vid, idProduct=pid, backend=_backend())
         except usb.core.NoBackendError as e:
             raise TransportError("libusb isn't installed (on macOS: brew install libusb)") from e
         if dev is None:
