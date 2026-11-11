@@ -221,3 +221,5 @@ __marimo__/
 samples/
 *.html
 !packaging/daisywriter.spec
+# output from daisywriter (emulator PDFs)
+*.pdf
