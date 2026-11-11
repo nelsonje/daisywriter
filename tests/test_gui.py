@@ -8,6 +8,7 @@ import shutil
 import docx
 import pytest
 from PySide6.QtCore import QSettings, Qt
+from PySide6.QtGui import QAction
 
 from daisywriter.gui import main_window as mw
 from daisywriter.gui.main_window import COL_CHECK, COL_STATUS, EMULATOR, MainWindow
@@ -177,3 +178,17 @@ def test_missing_files_are_reported(qtbot, tmp_path):
     w, _ = open_window(qtbot, tmp_path, tmp_path / "nope.docx", tmp_path / "nope.xlsx")
     assert w.table.rowCount() == 0
     assert "not found" in w.issues.topLevelItem(0).text(2)
+
+
+def test_menus_quit_and_print(qtbot, tmp_path, files, fake):
+    w, _ = open_window(qtbot, tmp_path, *files)
+    w.show()
+    assert w.quit_action.menuRole() == QAction.MenuRole.QuitRole
+    assert not w.quit_action.shortcut().isEmpty()
+    check_only(w, [1])
+    w.print_action.trigger()
+    assert not w.print_action.isEnabled() and w.stop_action.isEnabled()
+    qtbot.waitUntil(lambda: w.worker is None, timeout=10000)
+    assert w.print_action.isEnabled() and not w.stop_action.isEnabled()
+    w.quit_action.trigger()
+    assert not w.isVisible()

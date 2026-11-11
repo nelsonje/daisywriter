@@ -9,7 +9,9 @@ from __future__ import annotations
 
 import contextlib
 import datetime as dt
+import sys
 import zipfile
+from importlib import metadata
 from pathlib import Path
 
 from PySide6.QtCore import QDate, QFileSystemWatcher, QSettings, Qt, QThread, QTimer, QUrl
@@ -195,10 +197,49 @@ class MainWindow(QMainWindow):
         self.progress.hide()
         self.statusBar().addPermanentWidget(self.progress)
 
-        reload_action = QAction("Reload", self, shortcut=QKeySequence(QKeySequence.StandardKey.Refresh))
-        reload_action.triggered.connect(self.reload)
-        self.addAction(reload_action)
+        self._menus()
         self.resize(1200, 820)
+
+    def _menus(self):
+        """Native menus: on macOS, Quit and About move to the application menu, and
+        Qt types Ctrl as ⌘ (⌘Q, ⌘O, ⌘P); on Windows, Quit is File > Exit (Alt+F4)."""
+        file_menu = self.menuBar().addMenu("&File")
+        self._action(file_menu, "Open &Template…", "Ctrl+O",
+                     lambda: self._browse(self.template_edit, "Word (*.docx)"))
+        self._action(file_menu, "Open &Data…", "Ctrl+Shift+O",
+                     lambda: self._browse(self.data_edit, "Excel (*.xlsx)"))
+        self._action(file_menu, "&Reload", ["F5", "Ctrl+R"], self.reload)
+        file_menu.addSeparator()
+        self.print_action = self._action(file_menu, "&Print Checked Letters",
+                                         "Ctrl+P", self.print_checked)
+        self.stop_action = self._action(file_menu, "&Stop Printing", "Ctrl+.", self.stop_printing)
+        self.stop_action.setEnabled(False)
+        file_menu.addSeparator()
+        windows = sys.platform == "win32"
+        self.quit_action = self._action(file_menu, "E&xit" if windows else "&Quit",
+                                        "Alt+F4" if windows else "Ctrl+Q", self.close)
+        self.quit_action.setMenuRole(QAction.MenuRole.QuitRole)
+        help_menu = self.menuBar().addMenu("&Help")
+        about = self._action(help_menu, "&About daisywriter", None, self._about)
+        about.setMenuRole(QAction.MenuRole.AboutRole)
+
+    def _action(self, menu, text, shortcut, slot) -> QAction:
+        action = QAction(text, self)
+        if shortcut is not None:
+            keys = shortcut if isinstance(shortcut, list) else [shortcut]
+            action.setShortcuts([QKeySequence(k) for k in keys])
+        action.triggered.connect(lambda _=False: slot())
+        menu.addAction(action)
+        return action
+
+    def _about(self):
+        try:
+            version = metadata.version("daisywriter")
+        except metadata.PackageNotFoundError:
+            version = "(development)"
+        QMessageBox.about(self, "About daisywriter",
+                          f"<b>daisywriter</b> {version}<p>Mail merge from Word and Excel "
+                          "onto daisywheel typewriters.</p>")
 
     # Settings and files
 
@@ -509,9 +550,10 @@ class MainWindow(QMainWindow):
         worker.letter_state.connect(self._on_letter_state)
         worker.finished.connect(self._on_finished)
         self.thread.started.connect(worker.run)
-        for w in (self.print_button, self.target, self.status_button):
+        for w in (self.print_button, self.print_action, self.target, self.status_button):
             w.setEnabled(False)
-        self.stop_button.setEnabled(True)
+        for w in (self.stop_button, self.stop_action):
+            w.setEnabled(True)
         self.progress.setValue(0)
         self.progress.show()
         self.thread.start()
@@ -541,9 +583,10 @@ class MainWindow(QMainWindow):
         self.thread.quit()
         self.thread.wait()
         self.worker, self.thread = None, None
-        for w in (self.print_button, self.target, self.status_button):
+        for w in (self.print_button, self.print_action, self.target, self.status_button):
             w.setEnabled(True)
-        self.stop_button.setEnabled(False)
+        for w in (self.stop_button, self.stop_action):
+            w.setEnabled(False)
         self.progress.hide()
         self.statusBar().showMessage(summary, 10000)
         if isinstance(worker.transport, Emulator):
