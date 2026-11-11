@@ -220,9 +220,9 @@ line_pause_s = 0.0
 ## 12. Phases
 1. **Core, no hardware:** ✅ done (branch `phase1-core`). model, template, records, validate, merge, layout, preview, and the `validate`/`preview` CLI. Tests use fixture docx/xlsx files (including a split-run placeholder and a complex MERGEFIELD).
 2. **Typewriter output:** ✅ profiles, render, job, pyusb transport (Mac), the emulated typewriter, and `print`/`testpage` in the CLI. Printing works from macOS on the Swintec; see §16 for results and §16.1 for the checks left for the next session with the typewriter.
-3. **GUI:** 🔶 branch `phase3-gui`. PySide6 window (`gui/`), session persistence (`session.py`), the paper-prompt flow, printing on a background thread with Stop, and an emulator target that saves a PDF. The preview draws the emulated sheets, so it shows exactly what the bytes produce. Not yet tried by hand with the typewriter.
+3. **GUI:** ✅ PySide6 window (`gui/`), session persistence (`session.py`), the paper-prompt flow, printing on a background thread with Stop, and an emulator target that saves a PDF; see §11. The preview draws the emulated sheets, so it shows exactly what the bytes produce. Not yet tried with the typewriter (§16.1).
 4. **Windows:** usbprint ctypes transport, then hardware checks on Windows.
-5. **Typing errors:** 🔶 branch `phase5-errors`: `errors.py`, overstrike rendering, previews, CLI options, and the GUI controls (checkbox, rate, style, New errors). Not yet seen on paper.
+5. **Typing errors:** ✅ `errors.py`, overstrike rendering, previews, CLI options (`--typing-errors`, `--error-style`) and the window's controls; see §7. Not yet seen on paper (§16.1).
 6. **Packaging:** PyInstaller spec, WiX MSI, GitHub Actions; check the installer on a clean Windows VM.
 7. **Later:** envelopes, and the additional machines in §15.
 

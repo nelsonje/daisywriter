@@ -5,10 +5,12 @@ and an Excel spreadsheet onto a typewriter, one typed letter per row.
 See [docs/PLAN.md](docs/PLAN.md) for the design and roadmap.
 
 ## Status
-Phases 1 and 2 are done: read the template and spreadsheet, validate the
-merge, re-wrap the letters to the typewriter's margins, preview them, and print
-them from macOS (tested on the Swintec 1146 CMP) or on an emulated typewriter.
-Phase 3, the window, is in progress.
+Phases 1, 2, 3 and 5 are done: read the template and spreadsheet, validate
+the merge, re-wrap the letters to the typewriter's margins, add typing errors
+with typewriter-style corrections if wanted, preview them, and print them from
+macOS (tested on the Swintec 1146 CMP) or on an emulated typewriter, from the
+command line or the window. Next: printing from Windows (phase 4) and the
+installer (phase 6).
 
 ## Try it
 ```sh
