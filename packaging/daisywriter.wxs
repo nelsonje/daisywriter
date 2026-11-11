@@ -1,0 +1,40 @@
+<!--
+  The daisywriter installer (WiX Toolset v5).
+
+  Packs the PyInstaller folder (dist/daisywriter) into an MSI that installs for
+  all users in Program Files\daisywriter, adds a Start menu shortcut to the
+  window, and puts the folder on PATH so daisywriter-cli works in a terminal.
+  Installing a newer version replaces the old one (MajorUpgrade).
+
+  Build (on Windows, after PyInstaller):
+    dotnet tool install --global wix --version 5.0.2
+    wix build packaging/daisywriter.wxs -arch x64 -bindpath app=dist/daisywriter ^
+        -d Version=0.1.0 -o dist/daisywriter-0.1.0-x64.msi
+
+  The UpgradeCode must never change: Windows uses it to recognise earlier versions.
+-->
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Package Name="daisywriter" Manufacturer="Jacob Nelson" Version="$(Version)"
+           UpgradeCode="E3E65C25-5F18-4BD1-A3D6-3800625D98AE" Scope="perMachine">
+    <MajorUpgrade DowngradeErrorMessage="A newer version of daisywriter is already installed." />
+    <MediaTemplate EmbedCab="yes" />
+    <Property Id="ARPCOMMENTS" Value="Mail merge from Word and Excel onto daisywheel typewriters" />
+
+    <StandardDirectory Id="ProgramMenuFolder" />
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="INSTALLFOLDER" Name="daisywriter">
+        <Files Include="!(bindpath.app)\**" />
+
+        <Component Id="ShortcutAndPath">
+          <Shortcut Id="StartMenuShortcut" Directory="ProgramMenuFolder" Name="daisywriter"
+                    Description="Mail merge onto a daisywheel typewriter"
+                    Target="[INSTALLFOLDER]daisywriter.exe" WorkingDirectory="INSTALLFOLDER" />
+          <Environment Id="PathEntry" Name="PATH" Value="[INSTALLFOLDER]" Part="last" Action="set"
+                       System="yes" Permanent="no" />
+          <RegistryValue Root="HKLM" Key="Software\daisywriter" Name="InstallFolder" Type="string"
+                         Value="[INSTALLFOLDER]" KeyPath="yes" />
+        </Component>
+      </Directory>
+    </StandardDirectory>
+  </Package>
+</Wix>

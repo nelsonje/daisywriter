@@ -26,3 +26,56 @@ jobs:
           uv run daisywriter validate samples/letter-template.docx samples/letter-data.xlsx
           uv run daisywriter preview samples/letter-template.docx samples/letter-data.xlsx --letters 1 > preview.txt
           uv run daisywriter print samples/letter-template.docx samples/letter-data.xlsx --letters 1 -y --emulate letter.pdf
+
+  installer:
+    # The Windows installer: freeze with PyInstaller, pack with WiX, then install it
+    # silently, run both programs, and uninstall it again.
+    needs: test
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.3.3
+      - run: uv sync --locked --group packaging
+      - name: Freeze (PyInstaller)
+        run: uv run --group packaging pyinstaller packaging/daisywriter.spec --noconfirm
+      - name: Build the MSI (WiX)
+        run: |
+          dotnet tool install --global wix --version 5.0.2
+          $version = (uv version --short).Trim()
+          wix build packaging/daisywriter.wxs -arch x64 -bindpath app=dist/daisywriter `
+            -d Version=$version -o "dist/daisywriter-$version-x64.msi"
+          if ($LASTEXITCODE) { exit 1 }
+          "MSI=dist/daisywriter-$version-x64.msi" >> $env:GITHUB_ENV
+      - name: Install, run and uninstall
+        run: |
+          function Check($what) { if ($LASTEXITCODE) { throw "$what failed ($LASTEXITCODE)" } }
+          $msi = (Resolve-Path $env:MSI).Path
+          $p = Start-Process msiexec -ArgumentList "/i `"$msi`" /qn /l*v install.log" -Wait -PassThru
+          if ($p.ExitCode) { Get-Content install.log -Tail 40; throw "install failed ($($p.ExitCode))" }
+          $dir = Join-Path $env:ProgramFiles "daisywriter"
+          $cli = Join-Path $dir "daisywriter-cli.exe"
+          $work = Join-Path $env:RUNNER_TEMP "smoke"
+          & $cli profiles; Check "profiles"
+          & $cli make-samples $work; Check "make-samples"
+          & $cli print "$work/letter-template.docx" "$work/letter-data.xlsx" --letters 1 -y `
+            --typing-errors 3 --emulate "$work/letter.pdf"; Check "emulated print"
+          if (-not (Test-Path "$work/letter.pdf")) { throw "no PDF" }
+          $env:DAISYWRITER_SMOKE_TEST = "2"
+          $env:QT_QPA_PLATFORM = "offscreen"
+          $g = Start-Process (Join-Path $dir "daisywriter.exe") -Wait -PassThru
+          if ($g.ExitCode) { throw "the window exited with $($g.ExitCode)" }
+          $shortcut = Join-Path $env:ProgramData "Microsoft\Windows\Start Menu\Programs\daisywriter.lnk"
+          if (-not (Test-Path $shortcut)) { throw "no Start menu shortcut" }
+          $path = [Environment]::GetEnvironmentVariable("PATH", "Machine")
+          if (-not $path.Contains($dir)) { throw "not on PATH" }
+          $p = Start-Process msiexec -ArgumentList "/x `"$msi`" /qn" -Wait -PassThru
+          if ($p.ExitCode) { throw "uninstall failed ($($p.ExitCode))" }
+          if (Test-Path $dir) { throw "the install folder is still there" }
+          if (Test-Path $shortcut) { throw "the shortcut is still there" }
+      - uses: actions/upload-artifact@v7
+        with:
+          name: daisywriter-msi
+          path: dist/*.msi
