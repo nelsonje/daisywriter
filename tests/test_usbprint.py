@@ -49,7 +49,7 @@ def test_overlapped_write_and_timeout_through_a_named_pipe():
     name = rf"\\.\pipe\daisywriter-test-{uuid.uuid4().hex}"
     server = _winapi.CreateNamedPipe(
         name, _winapi.PIPE_ACCESS_DUPLEX,
-        _winapi.PIPE_TYPE_BYTE | _winapi.PIPE_READMODE_BYTE | _winapi.PIPE_WAIT,
+        0,  # PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT, all 0 (_winapi doesn't name them)
         1, 4096, 4096, 0, _winapi.NULL)
     try:
         t = UsbPrintTransport(path=name)
