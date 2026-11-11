@@ -212,7 +212,7 @@ line_pause_s = 0.0
 
 ## 12. Phases
 1. **Core, no hardware:** ✅ done (branch `phase1-core`). model, template, records, validate, merge, layout, preview, and the `validate`/`preview` CLI. Tests use fixture docx/xlsx files (including a split-run placeholder and a complex MERGEFIELD).
-2. **Typewriter output:** 🔶 printing works from macOS (branch `phase2-print`); see §16 for hardware results. Still to check on paper: the longer eject, bold from the right in a letter, letter 2 (blank address lines dropped), and a two-page letter. All four pass on the emulator. profiles, render, job, and pyusb transport (Mac). Golden byte tests; hardware checks on the Swintec. `print` in the CLI.
+2. **Typewriter output:** ✅ profiles, render, job, pyusb transport (Mac), the emulated typewriter, and `print`/`testpage` in the CLI. Printing works from macOS on the Swintec; see §16 for results and §16.1 for the checks left for the next session with the typewriter.
 3. **GUI:** PySide6 window, session persistence, the paper-prompt flow.
 4. **Windows:** usbprint ctypes transport, then hardware checks on Windows.
 5. **Typing errors:** errors.py plus preview and settings.
@@ -290,6 +290,17 @@ Design consequences now: per-profile `transport = "usb_printer" | "serial"`, an 
 | 2026-11-10: strikethrough (`testpage format`) | hyphens sit at the middle of capitals, a little above the middle of lowercase; small gaps between hyphens. Acceptable. | none |
 
 Typing speed is about 6–7 s per full 66-column line, and each extra pass (bold, underline) adds a carriage return plus the struck characters.
+
+### 16.1 Next session with the typewriter
+None of these block later phases; the emulator already passes the first four.
+- [ ] Eject: the sheet clears the rollers with `eject_extra_lines = 5`.
+- [ ] Bold re-struck right to left in a full letter (letter 2 of the Word template: "RE:", "fabric").
+- [ ] Letter 2: the blank Company and Address 2 lines are left out.
+- [ ] A two-page letter: the page 2 prompt, top margin, page number, and both ejects.
+- [ ] Cancel in the middle of a letter (Ctrl+C): CAN discards the buffered text and the typewriter stops after the current line.
+- [ ] Off-line in the middle of a page (press ON LINE), then back on-line: the job waits or times out with a clear message and continues (or cancels cleanly).
+- [ ] Cable unplugged in the middle of a page: a clear error, no hang.
+- [ ] All five sample letters in one run: no timeouts or stalls over a long job.
 
 ### Bold on carbon film
 Carbon film is fully black after the first strike, so re-striking in the same spot adds little. Bold needs wider strokes, which Diablo/Qume printers got by striking again 1/120 in to the side. Options considered for the Nakajima machines:
