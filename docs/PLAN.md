@@ -221,9 +221,9 @@ line_pause_s = 0.0
 1. **Core, no hardware:** ✅ done (branch `phase1-core`). model, template, records, validate, merge, layout, preview, and the `validate`/`preview` CLI. Tests use fixture docx/xlsx files (including a split-run placeholder and a complex MERGEFIELD).
 2. **Typewriter output:** ✅ profiles, render, job, pyusb transport (Mac), the emulated typewriter, and `print`/`testpage` in the CLI. Printing works from macOS on the Swintec; see §16 for results and §16.1 for the checks left for the next session with the typewriter.
 3. **GUI:** ✅ PySide6 window (`gui/`), session persistence (`session.py`), the paper-prompt flow, printing on a background thread with Stop, and an emulator target that saves a PDF; see §11. The preview draws the emulated sheets, so it shows exactly what the bytes produce. Not yet tried with the typewriter (§16.1).
-4. **Windows:** 🔶 branch `phase4-windows`: the usbprint transport, tested on Windows CI (SetupAPI with no adapter; writes, a timeout and a status error against a named pipe). Not yet tried with the typewriter (§16.1).
+4. **Windows:** ✅ the usbprint transport, tested on Windows CI (SetupAPI with no adapter; writes, a timeout and a status error against a named pipe). Not yet tried with the typewriter (§16.1).
 5. **Typing errors:** ✅ `errors.py`, overstrike rendering, previews, CLI options (`--typing-errors`, `--error-style`) and the window's controls; see §7. Not yet seen on paper (§16.1).
-6. **Packaging:** 🔶 branch `phase6-installer`. `packaging/daisywriter.spec` (PyInstaller) freezes two programs into one folder: `daisywriter.exe` (the window, no console) and `daisywriter-cli.exe`. `packaging/daisywriter.wxs` (WiX 5.0.2; v6+ needs the Open Source Maintenance Fee EULA) packs it into a per-machine MSI (Program Files\daisywriter, a Start menu shortcut, the folder on PATH, upgrades replace older versions). CI builds it on Windows, installs it silently, runs both programs, checks the shortcut and PATH, uninstalls, and uploads the MSI (about 41 MB) as an artifact. Not yet: an icon, an installer UI beyond Windows' progress bar, code signing (Windows warns about an unknown publisher), and a check on a clean Windows machine by hand.
+6. **Packaging:** ✅ `packaging/daisywriter.spec` (PyInstaller) freezes two programs into one folder: `daisywriter.exe` (the window, no console) and `daisywriter-cli.exe`. `packaging/daisywriter.wxs` (WiX 5.0.2; v6+ needs the Open Source Maintenance Fee EULA) packs it into a per-machine MSI (Program Files\daisywriter, a Start menu shortcut, the folder on PATH, upgrades replace older versions). CI builds it on Windows, installs it silently, runs both programs, checks the shortcut and PATH, uninstalls, and uploads the MSI (about 41 MB) as an artifact. Installed and tried by hand on Windows (2026-11-11). Not yet: an icon, an installer UI beyond Windows' progress bar, and code signing (Windows warns about an unknown publisher; see §14).
 7. **Later:** envelopes, and the additional machines in §15.
 
 ## 13. Testing
@@ -272,6 +272,13 @@ line_pause_s = 0.0
 ## 14. Open questions
 1. **Envelope details** (when that phase starts): feed orientation and stock sizes, how the address block is found (a separate envelope template, or the inside-address paragraphs of the letter template), and whether the return address is typed or pre-printed.
 
+2. **Signing and distribution:** the MSI is unsigned, so Windows warns about an unknown publisher. Options considered (2026-11-11):
+   - Azure Artifact Signing: $9.99/month; individuals in the US or Canada. Timestamped signatures stay valid after the account is deleted.
+   - A certificate authority's OV certificate: a few hundred dollars a year.
+   - SignPath Foundation: free, but only for public open-source projects.
+   - The Microsoft Store as MSIX: free, and signed by the Store; per-user install with automatic updates; a review for each release.
+   - The Store with our MSI: still needs our own signing.
+
 ## 15. Future machines (not near-term)
 The near-term focus is the Nakajima-family machines (Swintec 1146 CMP / Olympia Compact 2), and the design is kept profile-driven so these can be added later:
 | Machine | Interface | Notes |
@@ -313,7 +320,7 @@ None of these block later phases; the emulator already passes the first four.
 - [ ] Windows: Device Manager lists the adapter as USB Printing Support; `daisywriter status` finds it and reads the status (on-line, off-line, cable out).
 - [ ] Windows: `testpage margins format` and one letter print as on macOS.
 - [ ] Windows: off-line in the middle of a page gives the timeout message and the job cancels cleanly; the next job prints.
-- [ ] Windows: install the MSI from CI on a real machine (the UAC prompt, the unknown-publisher warning), start daisywriter from the Start menu, print, then uninstall.
+- [x] Windows: install the MSI from CI on a real machine, start daisywriter from the Start menu, print to the emulator, uninstall. Done 2026-11-11, without the typewriter: all as expected.
 - [ ] Windows: what an adapter stall looks like (PE high, as when the cable is loose on macOS), and whether `soft_reset()` recovers it without disturbing the typewriter.
 
 ### Bold on carbon film
