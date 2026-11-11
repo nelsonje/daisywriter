@@ -23,7 +23,7 @@ def encode(text: str, profile: Profile) -> bytes:
         if mapped is not None:
             out += mapped
         else:
-            out += ch.encode("ascii")  # validation guarantees typeable characters
+            out += ch.encode("ascii", errors="replace")  # validation reports untypeable ones
     return bytes(out).replace(SI + SO, b"")  # merge adjacent shift-out runs
 
 

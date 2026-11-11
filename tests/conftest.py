@@ -1,4 +1,5 @@
 import datetime as dt
+import os
 
 import pytest
 
@@ -8,6 +9,8 @@ from daisywriter.merge import MergeSettings
 from daisywriter.pipeline import Settings
 
 TODAY = dt.date(2026, 11, 8)
+
+os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")  # GUI tests run without a display
 
 
 @pytest.fixture(scope="session")

@@ -223,3 +223,13 @@ def _glyph_table(profile: Profile) -> dict[tuple[bool, int], str]:
         if len(body) == 1:
             table[(shifted, body[0])] = ch
     return table
+
+
+def emulate(letters, profile: Profile, opts=None) -> Emulator:
+    """Type letters onto an emulator, answering every paper prompt with yes."""
+    from ..job import PrintOptions, print_letters
+    e = Emulator(profile, opts.paper if opts else None, opts.stock if opts else "letter")
+    print_letters(e, letters, profile, opts or PrintOptions.for_profile(profile),
+                  lambda message: True, lambda s: None)
+    e.close()
+    return e

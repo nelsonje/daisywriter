@@ -86,3 +86,14 @@ def test_cancel_sends_can():
         print_letters(t, [letter()], PROFILE, PrintOptions.for_profile(PROFILE),
                       lambda m: next(calls), report=lambda s: None)
     assert t.writes[-1] == b"\x18"
+
+
+def test_stop_between_lines_and_progress():
+    t = FakeTransport()
+    seen = []
+    with pytest.raises(PrintCancelled):
+        print_letters(t, [letter(lines=5)], PROFILE, PrintOptions.for_profile(PROFILE), lambda m: True,
+                      report=lambda s: None, stop=lambda: len(seen) >= 2,
+                      progress=lambda *a: seen.append(a))
+    assert seen == [(1, 1, 1, 5), (1, 1, 2, 5)]
+    assert t.writes[-1] == b"\x18"  # CAN after stopping

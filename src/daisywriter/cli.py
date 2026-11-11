@@ -287,6 +287,9 @@ def main(argv: list[str] | None = None) -> int:
     _print_args(p, merge=False)
     p.set_defaults(func=cmd_testpage)
 
+    p = sub.add_parser("gui", help="open the daisywriter window")
+    p.set_defaults(func=lambda a: __import__("daisywriter.gui", fromlist=["main"]).main([]))
+
     p = sub.add_parser("profiles", help="list built-in typewriter profiles")
     p.set_defaults(func=cmd_profiles)
 

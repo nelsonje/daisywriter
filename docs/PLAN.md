@@ -205,15 +205,18 @@ line_pause_s = 0.0
   - **Emulator** (`transports/emulator.py`, `--emulate out.pdf`): a model of the Nakajima firmware (line buffer, CR/LF/BS/SO/SI/CAN/ESC, auto-wrap at the right margin, sheet loading and ejecting) that types onto virtual sheets and draws them as a true-size PDF (`pdf.py`, no dependencies). It reports firmware wraps, typing off the sheet, sheets still in the rollers, text left in the buffer, and cases the firmware notes leave open (spaces just before BS/ESC/SO/SI). It shows what we *think* the machine does; ink and darkness still need paper.
 
 ## 11. GUI (PySide6)
-- **Top:** Template [Browse], Data [Browse] + sheet picker, Typewriter profile dropdown, typewriter status light.
-- **Left:** a letter table (#, a key field such as name/company chosen by the user, pages, issues, print status) with checkboxes.
-- **Right:** a preview of the selected letter, page by page, in typewriter rendering.
-- **Bottom:** the validation issues list (click to jump to the letter), the typing-errors toggle and rate, and the print buttons.
+- **Top:** Template and Data with Browse, the worksheet, the typewriter profile; the date for `{{Today}}`, page numbers, justify; Reload (F5). The files are watched, so saving them in Word or Excel reloads the letters.
+- **Left:** a letter table (checkbox, #, the first two columns of the row, pages, issues, print status). Check All / None / Not printed. Letters that aren't printed yet start checked.
+- **Right:** the selected letter's sheets, drawn from the emulated typewriter, with the body shaded and the margins marked.
+- **Bottom:** the validation issues list (click one to see its letter); Check typewriter (status light); the target (typewriter, or emulator saving a PDF); Print checked letters; Stop (after the line being typed).
+- **Printing:** runs on a background thread, one letter at a time. Each sheet gets a paper prompt (none on the emulator). Letters with errors can't be printed; already-printed letters ask before printing again.
+- **Session** (`session.py`): each letter's status is saved in `<data>.daisywriter.json` next to the data file, keyed by the template name, the spreadsheet row and the row's values. Statuses are not printed, printing (shown as "interrupted" after a crash), printed (with the time, and "changed since" if the letter's content changed), and failed (with the reason). Stopping part way through a letter marks it failed; stopping at the paper prompt leaves it not printed.
+- **Later:** choosing which column names each letter; the typing-errors toggle and rate (phase 5).
 
 ## 12. Phases
 1. **Core, no hardware:** ✅ done (branch `phase1-core`). model, template, records, validate, merge, layout, preview, and the `validate`/`preview` CLI. Tests use fixture docx/xlsx files (including a split-run placeholder and a complex MERGEFIELD).
 2. **Typewriter output:** ✅ profiles, render, job, pyusb transport (Mac), the emulated typewriter, and `print`/`testpage` in the CLI. Printing works from macOS on the Swintec; see §16 for results and §16.1 for the checks left for the next session with the typewriter.
-3. **GUI:** PySide6 window, session persistence, the paper-prompt flow.
+3. **GUI:** 🔶 branch `phase3-gui`. PySide6 window (`gui/`), session persistence (`session.py`), the paper-prompt flow, printing on a background thread with Stop, and an emulator target that saves a PDF. The preview draws the emulated sheets, so it shows exactly what the bytes produce. Not yet tried by hand with the typewriter.
 4. **Windows:** usbprint ctypes transport, then hardware checks on Windows.
 5. **Typing errors:** errors.py plus preview and settings.
 6. **Packaging:** PyInstaller spec, WiX MSI, GitHub Actions; check the installer on a clean Windows VM.
@@ -238,7 +241,7 @@ line_pause_s = 0.0
   - Golden byte streams per profile: bold re-strikes, underline passes, charset/SO-SI mapping, newlines.
   - A `FakeTransport` that records bytes and simulates off-line, paper empty, write timeouts and adapter stalls, for testing the send loop, cancel (CAN) and paper prompts.
   - The pyusb backend against a mocked `usb.core` device.
-- **Phase 3 (GUI):** `pytest-qt` flows against the fake transport:
+- **Phase 3 (GUI):** done in `test_gui.py` and `test_session.py`; Qt runs offscreen (`QT_QPA_PLATFORM=offscreen`, set in `conftest.py`). `pytest-qt` flows against the fake transport:
   - load files
   - review issues
   - select letters

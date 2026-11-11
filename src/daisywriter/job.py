@@ -20,6 +20,17 @@ from .transports import Transport, TransportError
 # ask(message) -> True to go on, False to cancel. Used for paper prompts and retries.
 Ask = Callable[[str], bool]
 Report = Callable[[str], None]
+Stop = Callable[[], bool]  # checked before each line; True cancels the job
+# progress(letter number, page number, lines sent, lines on the page)
+Progress = Callable[[int, int, int, int], None]
+
+
+def _never() -> bool:
+    return False
+
+
+def _ignore(*args) -> None:
+    pass
 
 
 class PrintCancelled(Exception):
@@ -54,7 +65,8 @@ def wait_ready(transport: Transport, ask: Ask):
 
 
 def print_page(transport: Transport, page: Page, profile: Profile, opts: PrintOptions,
-               report: Report = lambda s: None, label: str = ""):
+               report: Report = _ignore, label: str = "", stop: Stop = _never,
+               progress: Callable[[int, int], None] = _ignore):
     nl = newline(profile)
     page_lines = round(STOCKS[opts.stock].length_in * profile.lines_per_inch)
     # a loaded sheet already sits load_offset_lines below its top edge (single sheets)
@@ -63,7 +75,10 @@ def print_page(transport: Transport, page: Page, profile: Profile, opts: PrintOp
         transport.write(nl * (opts.top_lines - loaded), opts.timeout_s)
     t0 = time.monotonic()
     for n, line in enumerate(page.lines, start=1):
+        if stop():
+            raise PrintCancelled()
         transport.write(render_line(line, profile), opts.timeout_s)
+        progress(n, len(page.lines))
         extra = f" ({passes(line, profile)} passes)" if passes(line, profile) > 1 else ""
         report(f"{label}line {n}/{len(page.lines)} sent at {time.monotonic() - t0:5.1f} s{extra}")
         if opts.line_pause_s and line.cells:
@@ -78,7 +93,8 @@ def print_page(transport: Transport, page: Page, profile: Profile, opts: PrintOp
 
 
 def print_letters(transport: Transport, letters: list[Letter], profile: Profile,
-                  opts: PrintOptions, ask: Ask, report: Report = print) -> list[int]:
+                  opts: PrintOptions, ask: Ask, report: Report = print, stop: Stop = _never,
+                  progress: Progress = _ignore) -> list[int]:
     """Print letters in order; returns the numbers of the letters printed in full."""
     done = []
     try:
@@ -93,7 +109,8 @@ def print_letters(transport: Transport, letters: list[Letter], profile: Profile,
                     transport.load_sheet()  # the emulator needs to know
                 wait_ready(transport, ask)
                 report(f"typing {where}")
-                print_page(transport, page, profile, opts, report, "  ")
+                print_page(transport, page, profile, opts, report, "  ", stop,
+                           lambda n, total, ln=letter.number, pn=page.number: progress(ln, pn, n, total))
             done.append(letter.number)
     except (PrintCancelled, KeyboardInterrupt, TransportError):
         cancel(transport)

@@ -5,13 +5,15 @@ and an Excel spreadsheet onto a typewriter, one typed letter per row.
 See [docs/PLAN.md](docs/PLAN.md) for the design and roadmap.
 
 ## Status
-Phase 1 is done: read the template and spreadsheet, validate the merge,
-re-wrap the letters to the typewriter's margins, and preview them. Phase 2 is
-in progress: printing from macOS works on the Swintec 1146 CMP.
+Phases 1 and 2 are done: read the template and spreadsheet, validate the
+merge, re-wrap the letters to the typewriter's margins, preview them, and print
+them from macOS (tested on the Swintec 1146 CMP) or on an emulated typewriter.
+Phase 3, the window, is in progress.
 
 ## Try it
 ```sh
 uv sync
+uv run daisywriter gui                             # the window (also: daisywriter-gui)
 uv run daisywriter make-samples samples           # prototype template + spreadsheet
 uv run daisywriter validate samples/letter-template.docx samples/letter-data.xlsx
 uv run daisywriter preview  samples/letter-template.docx samples/letter-data.xlsx --letters 1-2
