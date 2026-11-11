@@ -184,6 +184,11 @@ class MainWindow(QMainWindow):
         bottom.addStretch(1)
         for w in (self.target, self.print_button, self.stop_button):
             bottom.addWidget(w)
+        bottom.addSpacing(24)
+        self.quit_button = QPushButton("Exit" if sys.platform == "win32" else "Quit")
+        self.quit_button.setToolTip("close daisywriter (asks first if letters are printing)")
+        self.quit_button.clicked.connect(self.close)
+        bottom.addWidget(self.quit_button)
 
         central = QWidget()
         v = QVBoxLayout(central)

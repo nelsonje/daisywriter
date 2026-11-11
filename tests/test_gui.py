@@ -192,3 +192,20 @@ def test_menus_quit_and_print(qtbot, tmp_path, files, fake):
     assert w.print_action.isEnabled() and not w.stop_action.isEnabled()
     w.quit_action.trigger()
     assert not w.isVisible()
+
+
+def test_quit_button_asks_while_printing(qtbot, tmp_path, files, fake):
+    w, d = open_window(qtbot, tmp_path, *files, Dialogs({"Printing": False}))
+    w.show()
+    prompts = []
+    w._answer_prompt = prompts.append  # leave the paper prompt open: the job waits
+    check_only(w, [1])
+    w.print_button.click()
+    qtbot.waitUntil(lambda: bool(prompts), timeout=5000)
+    w.quit_button.click()  # answered "Keep printing"
+    assert w.isVisible() and d.asked[-1][0] == "Printing"
+    w.worker.answer(True)
+    qtbot.waitUntil(lambda: w.worker is None, timeout=10000)
+    assert status(w, 1).startswith("printed")
+    w.quit_button.click()
+    assert not w.isVisible()
