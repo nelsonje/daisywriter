@@ -9,8 +9,8 @@ Phases 1, 2, 3 and 5 are done: read the template and spreadsheet, validate
 the merge, re-wrap the letters to the typewriter's margins, add typing errors
 with typewriter-style corrections if wanted, preview them, and print them from
 macOS (tested on the Swintec 1146 CMP) or on an emulated typewriter, from the
-command line or the window. Next: printing from Windows (phase 4) and the
-installer (phase 6).
+command line or the window. Printing from Windows (phase 4) is written and
+tested without a typewriter. Next: the installer (phase 6).
 
 ## Try it
 ```sh
@@ -22,7 +22,7 @@ uv run daisywriter preview  samples/letter-template.docx samples/letter-data.xls
 uv run daisywriter preview  samples/letter-template.docx samples/letter-data.xlsx -o preview.html
 uv run daisywriter profiles
 ```
-Printing (macOS/Linux with a USB printer-class parallel adapter; needs libusb, e.g. `brew install libusb`):
+Printing needs a USB printer-class parallel adapter. On macOS and Linux it needs libusb (e.g. `brew install libusb`); on Windows the built-in USB Printing Support driver is used, so nothing needs installing (no printer has to be set up either):
 ```sh
 uv run daisywriter status                          # is the typewriter connected and on-line?
 uv run daisywriter testpage margins format bold    # calibration patterns

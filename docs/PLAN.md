@@ -201,7 +201,7 @@ line_pause_s = 0.0
 - **Print queue in the GUI:** "Print all from #N", "Print selected", "Reprint". Each letter's status is saved in the session file (not printed, printing, printed, failed), so a crash or paper jam can resume.
 - Cancel: stop sending, then CAN to discard the machine's unprinted buffer.
 - Transports:
-  - **Windows:** SetupAPI enumeration of `GUID_DEVINTERFACE_USBPRINT`, `CreateFileW`, overlapped `WriteFile` with `CancelIoEx` for timeouts, plus `IOCTL_USBPRINT_GET_LPT_STATUS` (0x220030) and `IOCTL_USBPRINT_SOFT_RESET` (0x220040).
+  - **Windows** (`transports/usbprint.py`, ctypes, no dependencies): SetupAPI lists the interfaces of `GUID_DEVINTERFACE_USBPRINT`, and the device path's `vid_xxxx&pid_xxxx` picks the profile's adapter. `CreateFileW` opens it overlapped; each line is an overlapped `WriteFile`, cancelled with `CancelIoEx` when the timeout passes; `IOCTL_USBPRINT_GET_LPT_STATUS` (0x220030) reads the same status byte as GET_PORT_STATUS. `IOCTL_USBPRINT_SOFT_RESET` (0x220040) is available (`soft_reset()`) but not used until we know what it does to the typewriter.
   - **macOS/Linux:** pyusb, lifted from `cmpprint.py`.
   - **Dry run:** writes the bytes to a file.
   - **Emulator** (`transports/emulator.py`, `--emulate out.pdf`): a model of the Nakajima firmware (line buffer, CR/LF/BS/SO/SI/CAN/ESC, auto-wrap at the right margin, sheet loading and ejecting) that types onto virtual sheets and draws them as a true-size PDF (`pdf.py`, no dependencies). It reports firmware wraps, typing off the sheet, sheets still in the rollers, text left in the buffer, and cases the firmware notes leave open (spaces just before BS/ESC/SO/SI). It shows what we *think* the machine does; ink and darkness still need paper.
@@ -221,7 +221,7 @@ line_pause_s = 0.0
 1. **Core, no hardware:** ✅ done (branch `phase1-core`). model, template, records, validate, merge, layout, preview, and the `validate`/`preview` CLI. Tests use fixture docx/xlsx files (including a split-run placeholder and a complex MERGEFIELD).
 2. **Typewriter output:** ✅ profiles, render, job, pyusb transport (Mac), the emulated typewriter, and `print`/`testpage` in the CLI. Printing works from macOS on the Swintec; see §16 for results and §16.1 for the checks left for the next session with the typewriter.
 3. **GUI:** ✅ PySide6 window (`gui/`), session persistence (`session.py`), the paper-prompt flow, printing on a background thread with Stop, and an emulator target that saves a PDF; see §11. The preview draws the emulated sheets, so it shows exactly what the bytes produce. Not yet tried with the typewriter (§16.1).
-4. **Windows:** usbprint ctypes transport, then hardware checks on Windows.
+4. **Windows:** 🔶 branch `phase4-windows`: the usbprint transport, tested on Windows CI (SetupAPI with no adapter; writes, a timeout and a status error against a named pipe). Not yet tried with the typewriter (§16.1).
 5. **Typing errors:** ✅ `errors.py`, overstrike rendering, previews, CLI options (`--typing-errors`, `--error-style`) and the window's controls; see §7. Not yet seen on paper (§16.1).
 6. **Packaging:** PyInstaller spec, WiX MSI, GitHub Actions; check the installer on a clean Windows VM.
 7. **Later:** envelopes, and the additional machines in §15.
@@ -310,6 +310,10 @@ None of these block later phases; the emulator already passes the first four.
 - [ ] All five sample letters in one run: no timeouts or stalls over a long job.
 - [ ] Typing errors (`--typing-errors 5` or the window): x-outs and overstruck letters look like a typist's corrections on carbon film.
 - [ ] The window: print, Stop, and the paper prompts with the typewriter.
+- [ ] Windows: Device Manager lists the adapter as USB Printing Support; `daisywriter status` finds it and reads the status (on-line, off-line, cable out).
+- [ ] Windows: `testpage margins format` and one letter print as on macOS.
+- [ ] Windows: off-line in the middle of a page gives the timeout message and the job cancels cleanly; the next job prints.
+- [ ] Windows: what an adapter stall looks like (PE high, as when the cable is loose on macOS), and whether `soft_reset()` recovers it without disturbing the typewriter.
 
 ### Bold on carbon film
 Carbon film is fully black after the first strike, so re-striking in the same spot adds little. Bold needs wider strokes, which Diablo/Qume printers got by striking again 1/120 in to the side. Options considered for the Nakajima machines:
