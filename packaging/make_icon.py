@@ -4,7 +4,7 @@ Renders PNGs at the sizes Windows uses and packs them into an .ico:
     uv run python packaging/make_icon.py
 writes src/daisywriter/gui/icons/daisywriter-<size>.png (the window icon) and
 packaging/daisywriter.ico (the programs, the Start menu and Settings > Apps).
-Small sizes get fewer petals and no letters, so they stay readable.
+Small sizes get fewer, thicker petals, so they stay readable.
 """
 from __future__ import annotations
 
@@ -16,13 +16,12 @@ from pathlib import Path
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 from PySide6.QtCore import QBuffer, QIODevice, QPointF, QRectF, Qt
-from PySide6.QtGui import QColor, QFont, QGuiApplication, QImage, QLinearGradient, QPainter, QPen
+from PySide6.QtGui import QColor, QGuiApplication, QImage, QLinearGradient, QPainter, QPen
 
 ROOT = Path(__file__).resolve().parent.parent
 SIZES = [16, 24, 32, 48, 64, 128, 256]
 PAPER_TOP, PAPER_BOTTOM, PAPER_EDGE = QColor("#fdf8ec"), QColor("#efe2c2"), QColor("#a8946a")
 INK, HUB, HUB_RING, HOLE = QColor("#22252b"), QColor("#c8362b"), QColor("#8e2219"), QColor("#fdf8ec")
-LETTERS = "aAbBcCdDeEfFgGhHiIjJ"
 
 
 def draw(size: int) -> QImage:
@@ -44,7 +43,7 @@ def draw(size: int) -> QImage:
     p.setPen(QPen(PAPER_EDGE, max(1.0, s / 96)))
     p.drawRoundedRect(tile, s * 0.18, s * 0.18)
 
-    # the petals: spokes from the hub, each ending in a pad with a letter
+    # the petals: spokes from the hub, each ending in a pad
     petals = 20 if size >= 64 else 12 if size >= 32 else 8
     reach = s * 0.40  # centre of the pads
     pad = s * (0.050 if size >= 64 else 0.075 if size >= 32 else 0.09)
@@ -59,18 +58,6 @@ def draw(size: int) -> QImage:
         p.setPen(Qt.PenStyle.NoPen)
         p.setBrush(INK)
         p.drawEllipse(tip, pad, pad)
-        if size >= 128:  # the type, facing out as on a real printwheel
-            p.save()
-            p.translate(tip)
-            p.rotate(math.degrees(a) + 90)
-            font = QFont("Courier New")
-            font.setStyleHint(QFont.StyleHint.TypeWriter)
-            font.setBold(True)
-            font.setPixelSize(max(1, round(pad * 1.45)))
-            p.setFont(font)
-            p.setPen(HOLE)
-            p.drawText(QRectF(-pad, -pad, 2 * pad, 2 * pad), Qt.AlignmentFlag.AlignCenter, LETTERS[i])
-            p.restore()
 
     # the hub, red like the other half of a two-colour ribbon
     p.setPen(QPen(HUB_RING, max(1.0, s * 0.02)))
