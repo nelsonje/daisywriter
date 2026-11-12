@@ -1,7 +1,7 @@
 # Olympia Electronic Compact 2, US 356-U printwheel, built-in parallel port.
 # Character map from ../olympia-compact-electronic-2/FIRMWARE_NOTES.md
 # (derived from the firmware; not yet checked against a printout).
-name = "Olympia Compact 2 (US 356-U wheel)"
+name = "Olympia Electronic Compact 2 (US 356-U wheel)"
 transport = "usb_printer"
 usb = { vid = 0x067B, pid = 0x2305 }
 paper = "single_sheet"        # or "continuous"

@@ -5,7 +5,7 @@ in Word, list the people it goes to in Excel, and daisywriter types one letter
 per person, filling in their name, address and anything else from the
 spreadsheet.
 
-It works with the **Swintec 1146 CMP** and the **Olympia Compact 2**, connected
+It works with the **Swintec 1146 CMP** and the **Olympia Electronic Compact 2**, connected
 to the computer with a USB-to-parallel cable.
 
 ## 1. Install daisywriter

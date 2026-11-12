@@ -1,4 +1,4 @@
-"""A model of the Nakajima printer firmware (Olympia Compact 2, Swintec 1146 CMP)
+"""A model of the Nakajima printer firmware (Olympia Electronic Compact 2, Swintec 1146 CMP)
 that types onto virtual sheets, so the bytes daisywriter sends can be checked
 without a typewriter.
 

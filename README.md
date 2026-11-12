@@ -39,9 +39,7 @@ Download the `.dmg` for Apple-silicon Macs from the latest release (or the
 `daisywriter-dmg` artifact of a CI run), open it and drag daisywriter to
 Applications. The app isn't signed yet, so the first time macOS refuses to open
 it: open it once, then go to System Settings > Privacy & Security and choose
-Open Anyway. A Mac managed by an employer or school that only allows apps from
-identified developers won't open it at all until it's signed and notarized.
-libusb comes inside the app; nothing else needs installing.
+Open Anyway. libusb comes inside the app; nothing else needs installing.
 
 For the command line, link it onto your PATH:
 ```sh
