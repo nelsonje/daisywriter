@@ -1,0 +1,5 @@
+#!/bin/sh
+# Refuses to commit with any email but this project's. Switch the hooks on once per clone:
+#   git config core.hooksPath .githooks
+{ git var GIT_AUTHOR_IDENT; git var GIT_COMMITTER_IDENT; } | sed -n 's/.*<\(.*\)>.*/\1/p' |
+    "$(dirname "$0")/check-email"

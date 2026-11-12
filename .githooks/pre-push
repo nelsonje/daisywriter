@@ -1,0 +1,18 @@
+#!/bin/sh
+# Refuses to push commits made with any email but this project's (from before the hooks were on).
+remote="$1"
+zero=0000000000000000000000000000000000000000
+while read -r local_ref local_sha remote_ref remote_sha; do
+    [ "$local_sha" = "$zero" ] && continue  # deleting a branch
+    if [ "$remote_sha" = "$zero" ]; then
+        range="$local_sha --not --remotes=$remote"  # a new branch: what the remote doesn't have
+    else
+        range="$remote_sha..$local_sha"
+    fi
+    # shellcheck disable=SC2086
+    git log --format='%ae%n%ce' $range | "$(dirname "$0")/check-email" || {
+        echo "(in the commits being pushed to $remote_ref)" >&2
+        exit 1
+    }
+done
+exit 0

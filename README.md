@@ -94,6 +94,9 @@ Useful options: `--profile olympia-compact-2`, `--today 2026-11-08`,
 
 ## Development
 ```sh
+git config user.email jacob@jfet.net   # this project's commits use this email
+git config core.hooksPath .githooks    # once per clone: refuse commits and pushes with any other
 uv run pytest
 uv run ruff check src tests
 ```
+CI also fails if any commit carries another email (the `emails` job).

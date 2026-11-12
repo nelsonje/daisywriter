@@ -1,0 +1,10 @@
+#!/bin/sh
+# Shared by the hooks and CI. Reads email addresses, one per line, and fails if
+# any isn't allowed. An allow-list, so this file names no other address or
+# domain, and the message never repeats the address it rejected.
+allowed='jacob@jfet\.net|noreply@github\.com|[^@]+@users\.noreply\.github\.com'
+if grep -viE "^($allowed)$" | grep -q .; then
+    echo "This repository is committed as jacob@jfet.net, but another email was used." >&2
+    echo "Fix it with:  git config user.email jacob@jfet.net" >&2
+    exit 1
+fi

@@ -5,6 +5,15 @@ on:
   pull_request:
 
 jobs:
+  emails:
+    # Every commit uses this project's email; the same check as the git hooks in .githooks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0  # every branch's full history
+      - run: git log --all --format='%ae%n%ce' | .githooks/check-email
+
   test:
     strategy:
       fail-fast: false
