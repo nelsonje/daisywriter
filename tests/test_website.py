@@ -17,4 +17,6 @@ def test_page_links_to_the_release_and_has_the_guide(tmp_path):
     # the guide, a level below the page's headings, with its tables
     assert "<h1>daisywriter</h1>" in page and "daisywriter user guide" not in page
     assert '<h3 id="5-print">5. Print</h3>' in page and "<table>" in page
+    assert '<a href="https://github.com/someone/daisywriter/blob/main/LICENSE">MIT license</a>' in page
+    assert page.index('id="about"') > page.index('id="guide"')  # at the end, after the guide
     assert {p.name for p in tmp_path.iterdir()} == {"index.html", "style.css", "icon.png", "favicon.png"}

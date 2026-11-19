@@ -3,6 +3,8 @@ name = "daisywriter"
 version = "0.1.2"
 description = "Mail merge from Word and Excel onto daisywheel typewriters"
 readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [
     { name = "Jacob Nelson", email = "jacob@jfet.net" }
 ]
