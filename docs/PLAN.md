@@ -309,8 +309,9 @@ Typing speed is about 6–7 s per full 66-column line, and each extra pass (bold
 
 ### 16.1 Next session with the typewriter
 None of these block later phases; the emulator already passes the first four.
-- [ ] Eject: the sheet clears the rollers with `eject_extra_lines = 5`.
-- [ ] Bold re-struck right to left in a full letter (letter 2 of the Word template: "RE:", "fabric").
+Two Swintec 1146 CMPs so far: the first (2026-11-08 to 11-10, macOS) and a second from 2026-11-18 (Windows), which may have less carrier play. The friend's machine for the alpha is the first one; repeat the unit-specific checks (margins, load offset, eject, `testpage bold`) on it before handing it over.
+- [x] Eject: the sheet clears the rollers with `eject_extra_lines = 5`. Done 2026-11-18 (second Swintec, Windows).
+- [ ] Bold re-struck right to left in a full letter (letter 2 of the Word template: "RE:", "fabric"). 2026-11-18: bold looked right in a sample letter on the second Swintec; `testpage bold` on that unit still to do.
 - [ ] Letter 2: the blank Company and Address 2 lines are left out.
 - [ ] A two-page letter: the page 2 prompt, top margin, page number, and both ejects.
 - [ ] Cancel in the middle of a letter (Ctrl+C): CAN discards the buffered text and the typewriter stops after the current line.
@@ -319,8 +320,8 @@ None of these block later phases; the emulator already passes the first four.
 - [ ] All five sample letters in one run: no timeouts or stalls over a long job.
 - [ ] Typing errors (`--typing-errors 5` or the window): x-outs and overstruck letters look like a typist's corrections on carbon film.
 - [ ] The window: print, Stop, and the paper prompts with the typewriter.
-- [ ] Windows: Device Manager lists the adapter as USB Printing Support; `daisywriter status` finds it and reads the status (on-line, off-line, cable out).
-- [ ] Windows: `testpage margins format` and one letter print as on macOS.
+- [ ] Windows: Device Manager lists the adapter as USB Printing Support; `daisywriter status` finds it and reads the status (on-line, off-line, cable out). 2026-11-18, the v0.1.0 MSI: found the adapter with no setup, and **Check typewriter** read off-line and on-line correctly. Cable out still to do.
+- [ ] Windows: `testpage margins format` and one letter print as on macOS. 2026-11-18, the v0.1.0 MSI: a sample letter printed as expected (margins, bold, eject). The test pages still to do.
 - [ ] Windows: off-line in the middle of a page gives the timeout message and the job cancels cleanly; the next job prints.
 - [x] Windows: install the MSI from CI on a real machine, start daisywriter from the Start menu, print to the emulator, uninstall. Done 2026-11-11, without the typewriter: all as expected.
 - [ ] Mac app: print from the installed app (its own libusb, not Homebrew's).
