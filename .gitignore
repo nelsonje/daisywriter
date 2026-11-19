@@ -220,6 +220,10 @@ __marimo__/
 .streamlit/secrets.toml
 samples/
 *.html
+!website/index.html
 !packaging/daisywriter.spec
 # output from daisywriter (emulator PDFs)
 *.pdf
+
+# website build output
+_site/

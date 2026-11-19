@@ -99,5 +99,6 @@ git config user.email jacob@jfet.net   # this project's commits use this email
 git config core.hooksPath .githooks    # once per clone: refuse commits and pushes with any other
 uv run pytest
 uv run ruff check src tests
+uv run python website/build.py --out _site   # the web page (published by .github/workflows/pages.yml)
 ```
 CI also fails if any commit carries another email (the `emails` job).

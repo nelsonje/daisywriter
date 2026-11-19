@@ -31,6 +31,10 @@ dev = [
     "pytest>=9.2.0",
     "pytest-qt>=4.5.0",
     "ruff>=0.17.4",
+    {include-group = "website"},
+]
+website = [
+    "markdown>=3.7",
 ]
 packaging = [
     "pyinstaller>=6.22.3",

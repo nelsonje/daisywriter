@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>daisywriter: mail merge onto a daisywheel typewriter</title>
+<meta name="description" content="Write a letter in Word, list the people it goes to in Excel, and daisywriter types a copy for each of them on your typewriter.">
+<link rel="icon" href="favicon.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <img src="icon.png" alt="" width="96" height="96">
+  <div>
+    <h1>daisywriter</h1>
+    <p class="tagline">Mail merge onto a daisywheel typewriter</p>
+  </div>
+</header>
+
+<main>
+<p class="intro">Write a letter in Word, list the people it goes to in Excel, and
+daisywriter types a copy for each of them on your typewriter, with their name,
+address and anything else filled in. It shows each letter exactly as it will be
+typed, and remembers which ones are done.</p>
+
+<section id="download">
+  <h2>Download</h2>
+  <p><a class="button" href="$msi">Download for Windows</a></p>
+  <p>Open the downloaded file to install daisywriter. Windows may say
+  <em>“Windows protected your PC”</em>, because this early version isn't signed
+  yet: click <strong>More info</strong>, then <strong>Run anyway</strong>.</p>
+  <ul class="more">
+    <li><a href="$samples">Sample letters</a>: a letter and a list of five people,
+      to try daisywriter before making your own.</li>
+    <li><a href="$dmg">daisywriter for Mac</a> (Apple silicon).</li>
+  </ul>
+  <p class="version">Version $version, an early test version.
+  <a href="$notes">What's new</a>.</p>
+</section>
+
+<section id="needs">
+  <h2>What you need</h2>
+  <ul>
+    <li>A <strong>Swintec 1146 CMP</strong> or <strong>Olympia Electronic Compact 2</strong>
+      typewriter.</li>
+    <li>A USB-to-parallel printer cable (with a Prolific PL2305 chip) to connect it.
+      There's nothing else to install, and no printer to set up.</li>
+    <li>Word and Excel, or another program that saves .docx and .xlsx files.</li>
+  </ul>
+</section>
+
+<section id="guide">
+  <h2>User guide</h2>
+  <p class="note">The same guide is in daisywriter under
+  <strong>Help &gt; daisywriter User Guide</strong>.</p>
+$guide
+</section>
+</main>
+
+<footer>
+  <p>daisywriter $version · <a href="$repo">Source code and earlier versions on GitHub</a></p>
+</footer>
+</body>
+</html>
