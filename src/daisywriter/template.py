@@ -258,7 +258,8 @@ class _Reader:
         self._check_sections(document)
         self._walk_blocks(document.element.body)
         for p in self.paragraphs:
-            if "{{" in p.text.replace("{{body}}", "").replace("{{/body}}", "") or "}}" in p.text:
+            rest = p.text.replace("{{body}}", "").replace("{{/body}}", "")
+            if "{{" in rest or "}}" in rest:
                 self.issues.append(I.warning(
                     "has '{{' or '}}' that isn't a complete placeholder; check for a typo",
                     f"paragraph {p.index}"))

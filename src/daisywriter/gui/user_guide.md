@@ -28,6 +28,11 @@ To remove it later: **Settings > Apps > Installed apps > daisywriter > Uninstall
    yet. Open **System Settings > Privacy & Security**, scroll down, and click
    **Open Anyway** next to daisywriter.
 
+**Sample letters:** to try daisywriter before making your own letter, download
+`daisywriter-…-samples.zip` from the same page as the installer and unzip it.
+It has a letter in Word and a list of five people in Excel to print it for;
+its `README.txt` says which files to choose.
+
 ## 2. Set up the typewriter
 
 1. Plug the USB cable into the computer and the parallel end into the

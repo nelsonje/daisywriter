@@ -175,6 +175,18 @@ jobs:
             echo "no release notes yet for $version (needed before tagging v$version)"
           fi
           echo "VERSION=$version" >> "$GITHUB_ENV"
+      - uses: astral-sh/setup-uv@v10.3.3
+      - name: Sample letters
+        run: |
+          set -eu
+          uv run --locked --no-dev daisywriter make-samples samples
+          cp tests/fixtures/word-letter.docx samples/letter-template-from-word.docx
+          cp packaging/samples-README.txt samples/README.txt
+          for template in samples/*.docx; do
+            uv run --locked --no-dev daisywriter validate "$template" samples/letter-data.xlsx -q
+          done
+          (cd samples && zip -X "../upload/daisywriter-$VERSION-samples.zip" README.txt *.docx *.xlsx)
+          unzip -l "upload/daisywriter-$VERSION-samples.zip"
       - name: Publish the release
         if: startsWith(github.ref, 'refs/tags/v')
         env:

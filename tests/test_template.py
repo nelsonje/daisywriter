@@ -128,3 +128,13 @@ def test_strikethrough(tmp_path):
     assert [(s.text or s.field.name, s.strike) for s in spans] == [
         ("Price: ", False), ("$40", True), (" $30, ", False), ("Old", True), ("New", True)]
     assert any("double strikethrough" in i.message for i in t.issues)
+
+
+def test_body_markers_are_not_stray_braces(sample_dir, tmp_path):
+    t = load_template(sample_dir / "letter-template-markers.docx")
+    assert not [i for i in t.issues if "complete placeholder" in i.message]
+    doc = docx.Document()
+    doc.add_paragraph("{{body}} Dear {{FirstName}, }}")
+    doc.save(str(tmp_path / "typo.docx"))
+    issues = load_template(tmp_path / "typo.docx").issues
+    assert [i.message for i in issues if "complete placeholder" in i.message]
