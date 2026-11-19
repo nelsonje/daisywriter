@@ -55,6 +55,39 @@ a { color: var(--red-dark); }
 .install li { margin: 0.4rem 0; }
 .version, .note, footer { color: var(--muted); font-size: 0.95rem; }
 
+/* How it works */
+.steps figure { margin: 1.5rem 0; }
+.steps figcaption { margin-bottom: 0.6rem; }
+.n {
+  display: inline-block;
+  width: 1.6rem; height: 1.6rem;
+  margin-right: 0.3rem;
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--paper);
+  font: 700 0.95rem/1.6rem system-ui, sans-serif;
+  text-align: center;
+}
+.doc, .typed {
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+}
+.doc {
+  padding: 1rem 1.4rem;
+  font: 0.92rem/1.35 Aptos, Calibri, "Segoe UI", system-ui, sans-serif;
+}
+.doc p { margin: 0; white-space: pre-wrap; tab-size: 4; }
+.doc mark { padding: 0 0.1em; border-radius: 0.2em; background: #fde68a; color: inherit; }
+.steps .table { overflow-x: auto; }
+.steps table { margin: 0; background: #fff; font-family: Aptos, Calibri, "Segoe UI", system-ui, sans-serif; }
+.steps th { background: #eef3ea; }
+.typed {
+  /* the top of the sheet, fading out where the letter goes on */
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 2.5rem), transparent);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 2.5rem), transparent);
+}
+.typed img { display: block; width: 100%; height: auto; }
+
 table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.95rem; }
 th, td { padding: 0.45rem 0.6rem; border: 1px solid var(--rule); text-align: left; vertical-align: top; }
 th { background: var(--table); }
