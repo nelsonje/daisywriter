@@ -9,8 +9,9 @@ build = runpy.run_path(str(Path(__file__).parent.parent / "website" / "build.py"
 def test_page_links_to_the_release_and_has_the_guide(tmp_path):
     page = build("0.1.2", tmp_path, "someone/daisywriter").read_text(encoding="utf-8")
     base = "https://github.com/someone/daisywriter/releases/download/v0.1.2/daisywriter-0.1.2"
-    for suffix in ("-windows-x64.msi", "-macos-arm64.dmg", "-samples.zip"):
-        assert f'href="{base}{suffix}"' in page
+    for suffix in ("-windows-x64.msi", "-macos-arm64.dmg"):
+        assert f'class="button" href="{base}{suffix}"' in page  # a button each
+    assert f'href="{base}-samples.zip"' in page
     assert "Version 0.1.2" in page and "$" not in re.sub(r"<section id=\"guide\">.*</section>", "", page,
                                                           flags=re.DOTALL)
     # the guide, a level below the page's headings, with its tables
