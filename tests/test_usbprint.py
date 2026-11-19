@@ -23,6 +23,25 @@ def test_vid_pid_from_device_paths():
     assert pick_device(PATHS, 0x1234, 0x5678) is None
 
 
+def test_unplugged_adapter_says_so():
+    from daisywriter.transports.usbprint import _failure
+    e = _failure("writing", 31)  # what pulling the USB cable gave on 2026-11-18
+    assert str(e) == ("writing failed: the adapter stopped responding: is the USB cable unplugged? "
+                      "(Windows error 31)")
+    assert "USB cable unplugged" in str(_failure("reading the port status", 1167))
+
+
+def test_unplugged_adapter_says_so_with_libusb():
+    from daisywriter.transports.pyusb import _failure
+
+    class USBError(Exception):
+        errno = 19
+    assert "is the USB cable unplugged?" in str(_failure("writing", USBError("No such device")))
+    USBError.errno = 5
+    assert str(_failure("writing", USBError("Input/Output Error"))) == \
+        "writing failed: USB error: Input/Output Error"
+
+
 def test_only_on_windows():
     if sys.platform == "win32":
         pytest.skip("this checks the error on other systems")

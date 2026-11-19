@@ -23,3 +23,12 @@ def test_profiles_and_samples(tmp_path, capsys):
     assert "olympia-compact-2" in capsys.readouterr().out
     assert main(["make-samples", str(tmp_path / "s")]) == 0
     assert (tmp_path / "s" / "letter-data.xlsx").exists()
+
+
+def test_status_exit_code(monkeypatch, capsys):
+    from daisywriter import transports
+    from daisywriter.transports.fake import FakeTransport
+    for raw, code in ((0x18, 0), (0x08, 1), (0x38, 1)):
+        monkeypatch.setattr(transports, "open_transport", lambda profile, raw=raw: FakeTransport(raw))
+        assert main(["status"]) == code
+    assert "off-line" in capsys.readouterr().out

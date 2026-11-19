@@ -98,7 +98,9 @@ Tables and pictures can't be typed: daisywriter will point them out.
    rollers above the typing point catch it**, then click **Continue**.
    daisywriter moves it down to the top margin, types the page, and feeds it
    out when it's done.
-7. To stop, click **Stop**: the typewriter finishes the line it's typing.
+7. To stop, click **Stop**. The typewriter finishes the line it's typing and may type one
+   or two more that it already had. Then take the sheet out: the letter is marked
+   **failed**, so print it again on a fresh sheet.
 
 daisywriter remembers which letters were printed, even after you close it, so
 you can carry on later. It keeps this in a small file next to your Excel file
@@ -128,6 +130,7 @@ spreadsheet are never misspelled.
 | What you see | What to do |
 |---|---|
 | *adapter … not found* | Check that the USB cable is plugged in at both ends. |
+| *the adapter stopped responding* | The USB cable came out while typing. Plug it back in, then print that letter again. |
 | *the typewriter is off-line* | Press **ON LINE** so its light comes on. |
 | *PE (paper empty) is high* | The parallel cable is loose: push it in at the typewriter. |
 | *the typewriter stopped taking data* | It went off-line or lost power while typing. Fix that, then print that letter again. |

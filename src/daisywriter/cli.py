@@ -164,12 +164,19 @@ def _open(profile, a):
         return Emulator(profile, a.paper, getattr(a, "stock", None) or "letter")
     try:
         t = open_transport(profile, a.dry_run)
+        _show_status(t)
     except TransportError as e:
         sys.exit(f"daisywriter: {e}")
-    st = t.status()
-    if st is not None:
-        print(f"{t.name}: {st.explain()} (status {st.raw:#04x})")
     return t
+
+
+def _show_status(t) -> bool:
+    """Print the port status; True if the typewriter is ready (or can't say)."""
+    st = t.status()
+    if st is None:
+        return True
+    print(f"{t.name}: {st.explain()} (status {st.raw:#04x})")
+    return st.ready
 
 
 def _send(t, letters, profile, opts, a) -> int:
@@ -181,7 +188,7 @@ def _send(t, letters, profile, opts, a) -> int:
         print("cancelled")
         return 1
     except KeyboardInterrupt:
-        print("\nstopped (the typewriter may finish the line it already has)")
+        print("\nstopped (the typewriter may still type the line or two it already has)")
         return 1
     except TransportError as e:
         print(f"daisywriter: {e}")
@@ -228,11 +235,16 @@ def cmd_print(a) -> int:
 
 
 def cmd_status(a) -> int:
+    from .transports import open_transport
     profile = load_profile(a.profile)
-    a.dry_run = None
-    t = _open(profile, a)
-    t.close()
-    return 0
+    try:
+        t = open_transport(profile)
+        try:
+            return 0 if _show_status(t) else 1
+        finally:
+            t.close()
+    except TransportError as e:
+        sys.exit(f"daisywriter: {e}")
 
 
 def cmd_testpage(a) -> int:
@@ -250,6 +262,32 @@ def cmd_testpage(a) -> int:
     opts = _options(profile, a, a.top)
     t = _open(profile, a)
     return _send(t, [letter], profile, opts, a)
+
+
+def cmd_probe(a) -> int:
+    from .job import PrintCancelled, wait_ready
+    from .probe import probe
+    profile = load_profile(a.profile)
+    a.dry_run = None
+    t = _open(profile, a)
+    try:
+        wait_ready(t, _ask)
+        if not _ask(f"Insert a sheet as for a letter. The probe types {a.lines + 1} lines and takes about "
+                    "a minute. Go?"):
+            return 1
+        probe(t, profile, lines=a.lines, watch_s=a.watch)
+    except PrintCancelled:
+        print("cancelled")
+        return 1
+    except KeyboardInterrupt:
+        print("\nstopped")
+        return 1
+    except TransportError as e:
+        print(f"daisywriter: {e}")
+        return 1
+    finally:
+        t.close()
+    return 0
 
 
 def cmd_profiles(a) -> int:
@@ -290,7 +328,8 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--force", action="store_true", help="print even if validation found errors")
     p.set_defaults(func=cmd_print)
 
-    p = sub.add_parser("status", help="show whether the typewriter is connected and ready")
+    p = sub.add_parser("status", help="show whether the typewriter is connected and ready "
+                                      "(exit status 1 if it isn't)")
     p.add_argument("--profile", help="typewriter profile id or .toml path")
     p.set_defaults(func=cmd_status)
 
@@ -298,6 +337,15 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("patterns", nargs="+", choices=["margins", "format", "bold", "charset"])
     _print_args(p, merge=False)
     p.set_defaults(func=cmd_testpage)
+
+    p = sub.add_parser("probe", help="measure how far ahead of the typewriter the adapter takes "
+                                     "data (to diagnose Stop)")
+    p.add_argument("--profile", help="typewriter profile id or .toml path")
+    p.add_argument("--lines", type=int, default=4, choices=range(1, 9), metavar="1-8",
+                   help="lines to send a byte at a time (default 4)")
+    p.add_argument("--watch", type=float, default=12.0, metavar="S",
+                   help="seconds to watch the status while the first line is typed (default 12)")
+    p.set_defaults(func=cmd_probe)
 
     p = sub.add_parser("gui", help="open the daisywriter window")
     p.set_defaults(func=lambda a: __import__("daisywriter.gui", fromlist=["main"]).main([]))

@@ -131,6 +131,23 @@ def test_stop_at_the_paper_prompt(qtbot, tmp_path, files, fake):
     assert "0 of 2 letters printed. Stopped." in w.statusBar().currentMessage()
 
 
+def test_stop_part_way_through_says_so(qtbot, tmp_path, files, fake):
+    w, d = open_window(qtbot, tmp_path, *files)
+    write = fake.write
+
+    def stop_on_the_fifth_line(data, timeout_s):
+        write(data, timeout_s)
+        if len(fake.writes) == 5:
+            w.worker.stop()  # as the Stop button does, from the window's thread
+    fake.write = stop_on_the_fifth_line
+    check_only(w, [1, 2])
+    print_and_wait(qtbot, w)
+    assert status(w, 1).startswith("failed") and status(w, 2) == "not printed"
+    assert d.told and d.told[-1][0] == "Printing stopped"
+    assert "Letter 1 was stopped part way through" in d.told[-1][1] and "fresh sheet" in d.told[-1][1]
+    assert fake.data.endswith(b"\x18")  # CAN
+
+
 def test_failure_is_recorded(qtbot, tmp_path, files, fake):
     fake.fail_after = 5
     w, d = open_window(qtbot, tmp_path, *files)

@@ -16,6 +16,10 @@ from ..profile import Profile
 from ..session import FAILED, NOT_PRINTED, PRINTED, PRINTING
 from ..transports import Transport, TransportError
 
+STOPPED_PART_WAY = ("was stopped part way through. The typewriter may still type a line or two "
+                    "that it already had. When it stops, take the sheet out and print the letter "
+                    "again on a fresh sheet.")
+
 
 class PrintWorker(QObject):
     asked = Signal(str)  # a question for the user; reply with answer()
@@ -38,7 +42,8 @@ class PrintWorker(QObject):
         self._answered.set()
 
     def stop(self):
-        """Stop before the next line (the typewriter finishes the line it has)."""
+        """Stop before the next line. The typewriter still types what it already has:
+        the line it's on and up to two more queued in it and the adapter."""
         self._stop.set()
         self.answer(False)  # in case a prompt is waiting
 
@@ -72,9 +77,10 @@ class PrintWorker(QObject):
                 except PrintCancelled:
                     if self._sent:
                         self.letter_state.emit(letter.number, FAILED, "stopped part way through")
+                        summary = f"Letter {letter.number} {STOPPED_PART_WAY}"
                     else:
                         self.letter_state.emit(letter.number, NOT_PRINTED, "")
-                    summary = "Stopped."
+                        summary = "Stopped."
                     break
                 except TransportError as e:
                     self.letter_state.emit(letter.number, FAILED, str(e))

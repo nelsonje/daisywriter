@@ -22,7 +22,7 @@ import re
 import sys
 import uuid
 
-from .base import DeviceNotFound, PortStatus, TransportError, WriteTimeout
+from .base import UNPLUGGED, DeviceNotFound, PortStatus, TransportError, WriteTimeout
 
 GUID_DEVINTERFACE_USBPRINT = uuid.UUID("28d78fad-5a12-11d1-ae5b-0000f803a8c2")
 IOCTL_USBPRINT_GET_LPT_STATUS = 0x220030
@@ -112,6 +112,18 @@ def _message(code: int) -> str:
     return f"{ctypes.FormatError(code).strip()} (Windows error {code})"
 
 
+# What a write or a status read gets once the adapter is gone. Pulling the USB
+# cable in the middle of a page gave ERROR_GEN_FAILURE (2026-11-18).
+GONE = {31: "ERROR_GEN_FAILURE", 433: "ERROR_NO_SUCH_DEVICE", 1167: "ERROR_DEVICE_NOT_CONNECTED",
+        1617: "ERROR_DEVICE_REMOVED"}
+
+
+def _failure(what: str, code: int) -> TransportError:
+    if code in GONE:
+        return TransportError(f"{what} failed: {UNPLUGGED} (Windows error {code})")
+    return TransportError(f"{what} failed: {_message(code)}")
+
+
 def usbprint_paths() -> list[str]:
     """Device paths of every USB printer-class device that's plugged in."""
     guid = GUID.from_uuid(GUID_DEVINTERFACE_USBPRINT)
@@ -172,14 +184,13 @@ class UsbPrintTransport:
         if not start(ctypes.byref(ov)):
             code = ctypes.get_last_error()
             if code != ERROR_IO_PENDING:
-                raise TransportError(f"{what} failed: {_message(code)}")
+                raise _failure(what, code)
             if _WaitForSingleObject(self._event, max(1, int(timeout_s * 1000))) == WAIT_TIMEOUT:
                 _CancelIoEx(self._h, ctypes.byref(ov))
                 _GetOverlappedResult(self._h, ctypes.byref(ov), ctypes.byref(done), True)  # let it finish
                 raise WriteTimeout(timed_out or f"{what} timed out")
         if not _GetOverlappedResult(self._h, ctypes.byref(ov), ctypes.byref(done), True):
-            code = ctypes.get_last_error()
-            raise TransportError(f"{what} failed: {_message(code)}")
+            raise _failure(what, ctypes.get_last_error())
         return done.value
 
     def status(self) -> PortStatus:

@@ -55,7 +55,7 @@ from ..transports import TransportError, open_transport
 from ..transports.emulator import Emulator, emulate
 from .check_header import CheckHeader
 from .sheet_view import PreviewArea
-from .worker import PrintWorker
+from .worker import STOPPED_PART_WAY, PrintWorker
 
 TYPEWRITER, EMULATOR = "typewriter", "emulator"
 
@@ -217,7 +217,8 @@ class MainWindow(QMainWindow):
         self.print_button.clicked.connect(self.print_checked)
         self.stop_button = QPushButton("Stop")
         self.stop_button.setEnabled(False)
-        self.stop_button.setToolTip("stop after the line being typed")
+        self.stop_button.setToolTip("stop sending lines; the typewriter still types the line or two "
+                                    "it already has")
         self.stop_button.clicked.connect(self.stop_printing)
         for w in (self.status_button, self.status_label):
             bottom.addWidget(w)
@@ -714,7 +715,7 @@ class MainWindow(QMainWindow):
     def stop_printing(self):
         if self.worker:
             self.worker.stop()
-            self.statusBar().showMessage("Stopping after the current line…")
+            self.statusBar().showMessage("Stopping: the typewriter types the line or two it already has…")
 
     def _on_finished(self, summary: str):
         worker = self.worker
@@ -729,7 +730,7 @@ class MainWindow(QMainWindow):
         self.statusBar().showMessage(summary, 10000)
         if isinstance(worker.transport, Emulator):
             self._emulated(worker.transport, summary)
-        elif "failed" in summary:
+        elif "failed" in summary or STOPPED_PART_WAY in summary:
             self.inform("Printing stopped", summary, warning=True)
 
     def _emulated(self, emulator: Emulator, summary: str):

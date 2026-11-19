@@ -37,6 +37,9 @@ class PortStatus:
         return "ready"
 
 
+UNPLUGGED = "the adapter stopped responding: is the USB cable unplugged?"
+
+
 class TransportError(Exception):
     """A problem talking to the typewriter, with a message for the user."""
 

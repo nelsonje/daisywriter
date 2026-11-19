@@ -7,7 +7,7 @@ adapters, so Windows uses transports/usbprint.py instead.
 """
 from __future__ import annotations
 
-from .base import DeviceNotFound, PortStatus, TransportError, WriteStalled, WriteTimeout
+from .base import UNPLUGGED, DeviceNotFound, PortStatus, TransportError, WriteStalled, WriteTimeout
 
 ENDPOINT_OUT = 0x01
 
@@ -20,6 +20,12 @@ def _backend():
     except ImportError:
         return None
     return libusb_package.get_libusb1_backend()
+
+
+def _failure(what: str, e) -> TransportError:
+    if e.errno == 19:  # ENODEV: the adapter was unplugged
+        return TransportError(f"{what} failed: {UNPLUGGED}")
+    return TransportError(f"{what} failed: USB error: {e}")
 
 
 class PyUsbTransport:
@@ -66,8 +72,11 @@ class PyUsbTransport:
         self._dev = dev
 
     def status(self) -> PortStatus:
-        # USB printer class GET_PORT_STATUS
-        return PortStatus.from_byte(self._dev.ctrl_transfer(0xA1, 1, 0, 0, 1)[0])
+        try:
+            # USB printer class GET_PORT_STATUS
+            return PortStatus.from_byte(self._dev.ctrl_transfer(0xA1, 1, 0, 0, 1)[0])
+        except self._usb.core.USBError as e:
+            raise _failure("reading the port status", e) from e
 
     def write(self, data: bytes, timeout_s: float) -> None:
         usb = self._usb
@@ -81,7 +90,7 @@ class PyUsbTransport:
                 raise WriteStalled("the adapter stalled the write (USB pipe error); it does this "
                                    "while PE is high. Check the cable, then try again: opening "
                                    "the adapter resets it") from e
-            raise TransportError(f"USB error: {e}") from e
+            raise _failure("writing", e) from e
         if n != len(data):
             raise TransportError(f"short write: {n} of {len(data)} bytes")
 

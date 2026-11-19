@@ -60,7 +60,8 @@ uv run daisywriter profiles
 ```
 Printing needs a USB printer-class parallel adapter. On macOS and Linux it needs libusb (e.g. `brew install libusb`); on Windows the built-in USB Printing Support driver is used, so nothing needs installing (no printer has to be set up either):
 ```sh
-uv run daisywriter status                          # is the typewriter connected and on-line?
+uv run daisywriter status                          # is the typewriter connected and on-line? (exit 1 if not)
+uv run daisywriter probe                           # how far ahead of the typewriter the adapter takes data
 uv run daisywriter testpage margins format bold    # calibration patterns
 uv run daisywriter print samples/letter-template.docx samples/letter-data.xlsx --letters 1
 uv run daisywriter print ... --dry-run out.bin     # write the bytes to a file instead
