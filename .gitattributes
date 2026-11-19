@@ -1,3 +1,6 @@
 *.docx binary
 *.xlsx binary
 tests/golden/*.txt text eol=lf
+.githooks/* text eol=lf
+*.sh text eol=lf
+.github/workflows/*.yml text eol=lf
