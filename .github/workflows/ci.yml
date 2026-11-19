@@ -12,6 +12,9 @@ jobs:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0  # every branch's full history
+          # a pull request's own commits, not the merge GitHub makes to test it, which
+          # carries the GitHub account's address (merge with a fast-forward, not the button)
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - run: git log --all --format='%ae%n%ce' | .githooks/check-email
 
   test:
