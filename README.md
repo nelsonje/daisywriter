@@ -2,9 +2,10 @@
 Tools for printing to daisywheel typewriters: mail merge from a Word template
 and an Excel spreadsheet onto a typewriter, one typed letter per row.
 
-**Using daisywriter:** see the [user guide](src/daisywriter/gui/user_guide.md)
-(also in the app under Help). Releases with installers for Windows and Mac are on
-the [Releases](https://github.com/nelsonje/daisywriter/releases) page.
+**Using daisywriter:** download it from **https://daisywriter.jfet.net**, which
+also has the [user guide](src/daisywriter/gui/user_guide.md) (in the app under
+Help, too). Every release, with its installers for Windows and Mac and the sample
+letters, is on the [Releases](https://github.com/nelsonje/daisywriter/releases) page.
 
 For the design and roadmap, see [docs/PLAN.md](docs/PLAN.md); to make a release,
 [docs/releases](docs/releases/README.md).

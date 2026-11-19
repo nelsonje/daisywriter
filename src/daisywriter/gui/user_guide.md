@@ -12,12 +12,19 @@ to the computer with a USB-to-parallel cable.
 
 **Windows**
 
-1. Run the installer, `daisywriter-…-windows-x64.msi`.
-2. Windows may say *"Windows protected your PC"*. This alpha version isn't signed
-   yet, so Windows doesn't know who made it. Click **More info**, then
-   **Run anyway**.
-3. When Windows asks whether to allow changes, click **Yes**.
-4. daisywriter is now in the Start menu.
+1. Download the installer, `daisywriter-…-windows-x64.msi`. This alpha version
+   isn't signed yet, so the web browser may warn that it *"isn't commonly
+   downloaded"*. To keep it:
+   - **Microsoft Edge:** in the downloads list, point at the file, click **…**,
+     then **Keep**. If Edge asks again, click **Show more**, then
+     **Keep anyway**.
+   - **Google Chrome:** click **Keep** (or **Download suspicious file**) in the
+     downloads list.
+2. Open the downloaded file to run the installer.
+3. Windows may say *"Windows protected your PC"*, for the same reason. Click
+   **More info**, then **Run anyway**.
+4. When Windows asks whether to allow changes, click **Yes**.
+5. daisywriter is now in the Start menu.
 
 To remove it later: **Settings > Apps > Installed apps > daisywriter > Uninstall**.
 
