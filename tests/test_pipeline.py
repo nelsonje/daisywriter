@@ -70,7 +70,7 @@ def test_untypeable_character_is_an_error(tmp_path, settings):
     m = run(tmp_path / "t.docx", path, settings)
     errors = [i.message for i in m.all_issues() if i.level is Level.ERROR]
     assert any('"°"' in e for e in errors)  # the Swintec map has no degree sign yet
-    settings.profile = "olympia-compact-2"
+    settings.profile = "olympia-electronic-compact-2"
     m = run(tmp_path / "t.docx", path, settings)
     errors = [i.message for i in m.all_issues() if i.level is Level.ERROR]
     assert len(errors) == 2 and all('"<"' in e or '">"' in e for e in errors)  # ° is on this wheel
@@ -83,7 +83,7 @@ def test_page_number_format_uses_fields(sample_dir, settings):
 
 
 def test_profiles_load():
-    p = load_profile("olympia-compact-2")
+    p = load_profile("olympia-electronic-compact-2")
     assert p.charset["©"] == b"\x0e-\x0f"
     assert not p.can_type("<") and p.can_type("±")
 

@@ -20,7 +20,7 @@ def test_validate_and_preview(sample_dir, tmp_path, capsys):
 
 def test_profiles_and_samples(tmp_path, capsys):
     assert main(["profiles"]) == 0
-    assert "olympia-compact-2" in capsys.readouterr().out
+    assert "olympia-electronic-compact-2" in capsys.readouterr().out
     assert main(["make-samples", str(tmp_path / "s")]) == 0
     assert (tmp_path / "s" / "letter-data.xlsx").exists()
 

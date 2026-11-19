@@ -9,12 +9,14 @@ from __future__ import annotations
 
 import contextlib
 import datetime as dt
+import shutil
 import sys
+import tempfile
 import zipfile
 from importlib import metadata, resources
 from pathlib import Path
 
-from PySide6.QtCore import QDate, QFileSystemWatcher, QSettings, Qt, QThread, QTimer, QUrl
+from PySide6.QtCore import QDate, QFileSystemWatcher, QSettings, QStandardPaths, Qt, QThread, QTimer, QUrl
 from PySide6.QtGui import QAction, QBrush, QColor, QDesktopServices, QIcon, QKeySequence
 from PySide6.QtWidgets import (
     QAbstractItemView,
@@ -271,6 +273,8 @@ class MainWindow(QMainWindow):
                                               lambda: self.reroll(all_letters=True))
         help_menu = self.menuBar().addMenu("&Help")
         self.guide_action = self._action(help_menu, "daisywriter &User Guide", "F1", self.show_guide)
+        self.samples_action = self._action(help_menu, "Open &Sample Letters", None, self.open_samples)
+        help_menu.addSeparator()
         about = self._action(help_menu, "&About daisywriter", None, self._about)
         about.setMenuRole(QAction.MenuRole.AboutRole)
 
@@ -304,6 +308,31 @@ class MainWindow(QMainWindow):
         QMessageBox.about(self, "About daisywriter",
                           f"<b>daisywriter</b> {version}<p>Mail merge from Word and Excel "
                           "onto daisywheel typewriters.</p>")
+
+    def samples_dir(self) -> Path:
+        """Where Open Sample Letters puts the files (tests replace this)."""
+        documents = QStandardPaths.writableLocation(QStandardPaths.StandardLocation.DocumentsLocation)
+        return Path(documents or Path.home()) / "daisywriter samples"
+
+    def open_samples(self):
+        """Put the sample letters in Documents and open them. Files already there are
+        kept, in case they've been changed."""
+        if self.worker is not None:
+            return
+        from ..samples import make_samples
+        folder = self.samples_dir()
+        folder.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory() as tmp:
+            for made in make_samples(tmp):
+                if not (folder / made.name).exists():
+                    shutil.copy(made, folder / made.name)
+        self.template_edit.setText(str(folder / "letter-template.docx"))
+        self.data_edit.setText(str(folder / "letter-data.xlsx"))
+        self.reload()
+        self.inform("Sample letters",
+                    f"The sample letters are open. They're in {folder}, to look at in Word and Excel."
+                    "\n\nClick a letter in the list to see it as it will be typed. To try printing "
+                    "without paper, choose \"Print on the emulator (PDF)\" next to the Print button.")
 
     # Settings and files
 

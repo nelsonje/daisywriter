@@ -24,7 +24,7 @@ from daisywriter.transports.emulator import Emulator
 
 HERE = Path(__file__).parent
 SWINTEC = load_profile("swintec-1146cmp")
-OLYMPIA = load_profile("olympia-compact-2")
+OLYMPIA = load_profile("olympia-electronic-compact-2")
 
 
 def typed(data: bytes, profile=SWINTEC) -> Emulator:

@@ -291,8 +291,10 @@ def cmd_probe(a) -> int:
 
 
 def cmd_profiles(a) -> int:
-    for pid, p in builtin_profiles().items():
-        print(f"{pid:22} {p.name}: {p.pitch_cpi} cpi, {p.lines_per_inch} lpi, margins "
+    profiles = builtin_profiles()
+    width = max(map(len, profiles))
+    for pid, p in profiles.items():
+        print(f"{pid:{width}} {p.name}: {p.pitch_cpi} cpi, {p.lines_per_inch} lpi, margins "
               f"{p.margin_left}-{p.margin_right} ({p.line_width} columns), {p.paper}")
     return 0
 

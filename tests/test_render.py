@@ -8,7 +8,7 @@ from daisywriter.render import encode, passes, render_line, reverse_pass
 
 _SW = load_profile("swintec-1146cmp")
 SWINTEC = dataclasses.replace(_SW, raw={**_SW.raw, "bold_restrikes": ["left"]})
-OLYMPIA = load_profile("olympia-compact-2")
+OLYMPIA = load_profile("olympia-electronic-compact-2")
 
 
 def cells(text, bold=False, underline=False):

@@ -4,6 +4,7 @@ Dialogs are replaced: confirm() answers from a script and records the
 questions, inform() records messages, choose_pdf() returns a path.
 """
 import shutil
+from pathlib import Path
 
 import docx
 import pytest
@@ -294,3 +295,24 @@ def test_user_guide(qtbot, tmp_path, files):
     w.guide_action.trigger()
     browser = w._guide.findChild(__import__("PySide6.QtWidgets", fromlist=["QTextBrowser"]).QTextBrowser)
     assert w._guide.isVisible() and "Set up the typewriter" in browser.toPlainText()
+
+
+def test_open_sample_letters(qtbot, tmp_path):
+    store = QSettings(str(tmp_path / "settings.ini"), QSettings.Format.IniFormat)
+    w = MainWindow(store)
+    qtbot.addWidget(w)
+    d = Dialogs()
+    w.inform = d.inform
+    folder = tmp_path / "Documents" / "daisywriter samples"
+    w.samples_dir = lambda: folder
+    assert w.table.rowCount() == 0
+    w.samples_action.trigger()
+    assert w.table.rowCount() == 5 and w.selected_letter().number == 1
+    assert Path(w.template_edit.text()) == folder / "letter-template.docx"
+    assert {p.name for p in folder.iterdir()} >= {"letter-template.docx", "letter-data.xlsx"}
+    assert d.told[-1][0] == "Sample letters" and str(folder) in d.told[-1][1]
+
+    # files already there are kept: they may have been changed
+    (folder / "letter-template.docx").write_bytes(b"changed")
+    w.samples_action.trigger()
+    assert (folder / "letter-template.docx").read_bytes() == b"changed"

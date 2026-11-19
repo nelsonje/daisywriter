@@ -73,7 +73,7 @@ Before each page, insert a sheet until the rollers above the printing point catc
 the typewriter ON LINE. daisywriter feeds to the 1-inch top margin, types the page, then
 rolls the sheet out.
 
-Useful options: `--profile olympia-compact-2`, `--today 2026-11-08`,
+Useful options: `--profile olympia-electronic-compact-2`, `--today 2026-11-08`,
 `--page-numbers after-first --page-number-format "{{LastName}} - Page {page} - {{Today}}"`,
 `--no-justify`, `--top`/`--bottom` (lines), `--stock letter|legal|a4`.
 
