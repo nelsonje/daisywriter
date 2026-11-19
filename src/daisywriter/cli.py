@@ -188,7 +188,7 @@ def _send(t, letters, profile, opts, a) -> int:
         print("cancelled")
         return 1
     except KeyboardInterrupt:
-        print("\nstopped (the typewriter may still type the line or two it already has)")
+        print("\nstopped (the typewriter finishes the line it's typing)")
         return 1
     except TransportError as e:
         print(f"daisywriter: {e}")

@@ -34,9 +34,9 @@ def test_single_sheet_feeds_and_ejects():
     assert len(asked) == 1 and "rollers" in asked[0]
     # top margin 6 lines from the top edge, the sheet is loaded 4 lines down: feed 2
     assert t.writes[0] == b"\n\n"
-    assert t.writes[1:4] == [b"x\n"] * 3
+    assert t.writes[1:7] == [b"x", b"\n"] * 3  # lines go a byte at a time
     # eject: 66 lines per page - (6 + 3) typed + 5 extra
-    assert t.writes[4] == b"\n" * 62
+    assert t.writes[7] == b"\n" * 62
 
 
 def test_one_prompt_per_page():
@@ -52,7 +52,7 @@ def test_continuous_paper_uses_form_feed_and_no_prompts():
 
 def test_no_eject():
     t, _, _ = run([letter()], eject=False)
-    assert t.writes[-1] == b"x\n"
+    assert t.data.endswith(b"x\n")
 
 
 def test_cancel_at_the_paper_prompt():
@@ -97,3 +97,14 @@ def test_stop_between_lines_and_progress():
                       progress=lambda *a: seen.append(a))
     assert seen == [(1, 1, 1, 5), (1, 1, 2, 5)]
     assert t.writes[-1] == b"\x18"  # CAN after stopping
+
+
+def test_stop_in_the_middle_of_a_line():
+    """The typewriter has just the bytes sent of the line, with no newline: the CAN discards them."""
+    t = FakeTransport()
+    page = Page(1, [Line([Cell(c) for c in "Dear Ann,"]), Line([Cell(c) for c in "Thank you."])])
+    with pytest.raises(PrintCancelled):
+        print_letters(t, [Letter(1, Record(2, {}), [], pages=[page])], PROFILE,
+                      PrintOptions.for_profile(PROFILE), lambda m: True, report=lambda s: None,
+                      stop=lambda: t.data.endswith(b"Th"))
+    assert t.data.endswith(b"Dear Ann,\nTh\x18")

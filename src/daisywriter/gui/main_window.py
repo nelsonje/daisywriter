@@ -217,8 +217,7 @@ class MainWindow(QMainWindow):
         self.print_button.clicked.connect(self.print_checked)
         self.stop_button = QPushButton("Stop")
         self.stop_button.setEnabled(False)
-        self.stop_button.setToolTip("stop sending lines; the typewriter still types the line or two "
-                                    "it already has")
+        self.stop_button.setToolTip("stop when the line being typed is finished")
         self.stop_button.clicked.connect(self.stop_printing)
         for w in (self.status_button, self.status_label):
             bottom.addWidget(w)
@@ -715,7 +714,7 @@ class MainWindow(QMainWindow):
     def stop_printing(self):
         if self.worker:
             self.worker.stop()
-            self.statusBar().showMessage("Stopping: the typewriter types the line or two it already has…")
+            self.statusBar().showMessage("Stopping when the line being typed is finished…")
 
     def _on_finished(self, summary: str):
         worker = self.worker

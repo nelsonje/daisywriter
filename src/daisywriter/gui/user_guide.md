@@ -103,9 +103,9 @@ Tables and pictures can't be typed: daisywriter will point them out.
    rollers above the typing point catch it**, then click **Continue**.
    daisywriter moves it down to the top margin, types the page, and feeds it
    out when it's done.
-7. To stop, click **Stop**. The typewriter finishes the line it's typing and may type one
-   or two more that it already had. Then take the sheet out: the letter is marked
-   **failed**, so print it again on a fresh sheet.
+7. To stop, click **Stop**. The typewriter finishes the line it's typing, then stops.
+   Take the sheet out: the letter is marked **failed**, so print it again on a fresh
+   sheet.
 
 daisywriter remembers which letters were printed, even after you close it, so
 you can carry on later. It keeps this in a small file next to your Excel file

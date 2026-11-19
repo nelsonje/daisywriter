@@ -22,7 +22,7 @@ wheels = [
 
 [[package]]
 name = "daisywriter"
-version = "0.1.1"
+version = "0.1.2"
 source = { editable = "." }
 dependencies = [
     { name = "libusb-package", marker = "sys_platform == 'darwin'" },

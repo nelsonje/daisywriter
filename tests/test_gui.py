@@ -135,11 +135,11 @@ def test_stop_part_way_through_says_so(qtbot, tmp_path, files, fake):
     w, d = open_window(qtbot, tmp_path, *files)
     write = fake.write
 
-    def stop_on_the_fifth_line(data, timeout_s):
+    def stop_after_two_lines(data, timeout_s):
         write(data, timeout_s)
-        if len(fake.writes) == 5:
+        if fake.data.count(b"\n") == 4:  # the top margin's 2 and two typed lines
             w.worker.stop()  # as the Stop button does, from the window's thread
-    fake.write = stop_on_the_fifth_line
+    fake.write = stop_after_two_lines
     check_only(w, [1, 2])
     print_and_wait(qtbot, w)
     assert status(w, 1).startswith("failed") and status(w, 2) == "not printed"

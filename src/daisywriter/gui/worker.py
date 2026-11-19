@@ -16,9 +16,8 @@ from ..profile import Profile
 from ..session import FAILED, NOT_PRINTED, PRINTED, PRINTING
 from ..transports import Transport, TransportError
 
-STOPPED_PART_WAY = ("was stopped part way through. The typewriter may still type a line or two "
-                    "that it already had. When it stops, take the sheet out and print the letter "
-                    "again on a fresh sheet.")
+STOPPED_PART_WAY = ("was stopped part way through. When the typewriter stops, take the sheet out "
+                    "and print the letter again on a fresh sheet.")
 
 
 class PrintWorker(QObject):
@@ -42,8 +41,7 @@ class PrintWorker(QObject):
         self._answered.set()
 
     def stop(self):
-        """Stop before the next line. The typewriter still types what it already has:
-        the line it's on and up to two more queued in it and the adapter."""
+        """Stop when the line being typed is finished (see job.py)."""
         self._stop.set()
         self.answer(False)  # in case a prompt is waiting
 

@@ -1,8 +1,14 @@
 """Send letters to a typewriter, a line at a time.
 
-Each write is one printed line, so the timeout applies per line and a long
-letter can't time out while the machine types. Before each page the job
-checks the port status, and with single sheets it waits for paper.
+Lines go a byte at a time. The typewriter takes the next line only once it has
+typed the last one, and the adapter holds just a few bytes (`daisywriter
+probe`, 2026-11-19), so a write waits while the line before is typed. Checking
+for Stop between bytes means Stop takes effect when the line being typed is
+done: the bytes of the next one are still in the typewriter's line buffer,
+with no newline to type them, and the CAN sent after stopping discards them.
+Sending whole lines, Stop came two lines late. The timeout applies per byte,
+so it covers one line's typing. Before each page the job checks the port
+status, and with single sheets it waits for paper.
 """
 from __future__ import annotations
 
@@ -20,7 +26,7 @@ from .transports import Transport, TransportError
 # ask(message) -> True to go on, False to cancel. Used for paper prompts and retries.
 Ask = Callable[[str], bool]
 Report = Callable[[str], None]
-Stop = Callable[[], bool]  # checked before each line; True cancels the job
+Stop = Callable[[], bool]  # checked between bytes; True cancels the job
 # progress(letter number, page number, lines sent, lines on the page)
 Progress = Callable[[int, int, int, int], None]
 
@@ -75,9 +81,10 @@ def print_page(transport: Transport, page: Page, profile: Profile, opts: PrintOp
         transport.write(nl * (opts.top_lines - loaded), opts.timeout_s)
     t0 = time.monotonic()
     for n, line in enumerate(page.lines, start=1):
-        if stop():
-            raise PrintCancelled()
-        transport.write(render_line(line, profile), opts.timeout_s)
+        for b in render_line(line, profile):
+            if stop():
+                raise PrintCancelled()
+            transport.write(bytes([b]), opts.timeout_s)
         progress(n, len(page.lines))
         extra = f" ({passes(line, profile)} passes)" if passes(line, profile) > 1 else ""
         report(f"{label}line {n}/{len(page.lines)} sent at {time.monotonic() - t0:5.1f} s{extra}")
