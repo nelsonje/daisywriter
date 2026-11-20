@@ -87,6 +87,21 @@ def test_loads_letters_issues_and_preview(qtbot, tmp_path, files):
     assert len(sheets) == 1 and len(sheets[0].strikes) > 500
     assert w.preview.view.body_rows[0]  # the body is shaded
     assert w.issues.topLevelItemCount() > 0
+    assert w.paper_label.text() == "Letter (8½ × 11 in), margins 1 in, 65 characters per line"
+
+
+def test_paper_from_the_template(qtbot, tmp_path, files):
+    import docx
+    from docx.shared import Inches
+    d = docx.Document(str(files[0]))
+    for section in d.sections:
+        section.page_width, section.left_margin = Inches(6.125), Inches(0.75)
+    d.save(str(tmp_path / "narrow.docx"))
+    w, _ = open_window(qtbot, tmp_path, tmp_path / "narrow.docx", files[1])
+    assert w.paper_label.text() == ("6⅛ × 11 in, margins: left ¾, right 1, top 1, bottom 1 in, "
+                                    "43 characters per line")
+    assert w.preview.view.stock.width_in == 6.125
+    assert w._options().shift_in == 0.25
 
 
 def test_issue_click_selects_its_letter(qtbot, tmp_path, files):

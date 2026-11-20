@@ -12,7 +12,7 @@ from .layout import LayoutSettings, PageNumbers
 from .merge import MergeSettings
 from .pipeline import Merge, Settings, run
 from .preview import render_html, render_text
-from .profile import STOCKS, builtin_profiles, load_profile
+from .profile import builtin_profiles, load_profile, paper_size
 from .session import Session
 from .transports import TransportError
 from .values import DEFAULT_DATE
@@ -37,6 +37,14 @@ def _date_arg(text: str) -> dt.date:
         raise argparse.ArgumentTypeError(f"bad date {text!r} (use YYYY-MM-DD)") from None
 
 
+def _paper_arg(text: str) -> str:
+    try:
+        paper_size(text)
+    except ValueError as e:
+        raise argparse.ArgumentTypeError(str(e)) from None
+    return text
+
+
 def _merge_args(p: argparse.ArgumentParser):
     p.add_argument("template", type=Path, help="Word template (.docx)")
     p.add_argument("data", type=Path, help="Excel records (.xlsx), first row = headers")
@@ -48,9 +56,11 @@ def _merge_args(p: argparse.ArgumentParser):
                         f"(default: \"{DEFAULT_DATE}\")")
     p.add_argument("--ignore-excel-formats", action="store_true",
                    help="don't show values as formatted in Excel (template formats still apply)")
-    p.add_argument("--stock", choices=sorted(STOCKS), default="letter", help="paper size")
-    p.add_argument("--top", type=int, default=6, help="lines fed before the first typed line")
-    p.add_argument("--bottom", type=int, default=6, help="lines left blank at the page bottom")
+    p.add_argument("--paper-size", "--stock", type=_paper_arg, metavar="SIZE",
+                   help="letter, legal, a4 or WIDTHxLENGTH in inches, e.g. 6.125x11 "
+                        "(default: the template's, from Word's Layout > Size)")
+    p.add_argument("--top", type=int, help="top margin in lines (default: the template's)")
+    p.add_argument("--bottom", type=int, help="bottom margin in lines (default: the template's)")
     p.add_argument("--no-justify", action="store_true", help="type justified paragraphs ragged-right")
     p.add_argument("--page-numbers", choices=["off", "after-first", "all"], default="off")
     p.add_argument("--page-number-position", choices=["top", "bottom"], default="top")
@@ -68,7 +78,7 @@ def _merge_args(p: argparse.ArgumentParser):
 def _settings(a) -> Settings:
     pn = PageNumbers(a.page_numbers.replace("-", "_"), a.page_number_position,
                      a.page_number_align, a.page_number_format)
-    layout = LayoutSettings(stock=a.stock, top_lines=a.top, bottom_lines=a.bottom,
+    layout = LayoutSettings(stock=a.paper_size, top_lines=a.top, bottom_lines=a.bottom,
                             justify=not a.no_justify, page_numbers=pn)
     merge = MergeSettings(today=a.today or dt.date.today(), default_date=a.date_format,
                           excel_formats=not a.ignore_excel_formats)
@@ -112,7 +122,7 @@ def cmd_preview(a) -> int:
         letters = [x for x in letters if x.number in a.letters]
         if not letters:
             sys.exit(f"daisywriter: no such letters (there are {len(m.letters)})")
-    width = m.profile.line_width
+    width = m.frame.columns
     fmt = a.format
     if fmt == "auto":
         fmt = "html" if a.output and a.output.suffix.lower() in (".html", ".htm") else (
@@ -157,11 +167,11 @@ def _print_args(p: argparse.ArgumentParser, merge: bool):
     p.add_argument("-y", "--yes", action="store_true", help="don't prompt for paper")
 
 
-def _open(profile, a):
+def _open(profile, a, opts=None):
     from .transports import open_transport
     if getattr(a, "emulate", None):
         from .transports.emulator import Emulator
-        return Emulator(profile, a.paper, getattr(a, "stock", None) or "letter")
+        return Emulator(profile, a.paper, opts.stock if opts else "letter")
     try:
         t = open_transport(profile, a.dry_run)
         _show_status(t)
@@ -196,14 +206,14 @@ def _send(t, letters, profile, opts, a) -> int:
     finally:
         t.close()
         if getattr(a, "emulate", None):
-            _emulated(t, a)
+            _emulated(t, a, opts)
     print(f"done: {len(done)} letter(s) sent" + (f" to {a.dry_run}" if a.dry_run else ""))
     return 0
 
 
-def _emulated(t, a):
+def _emulated(t, a, opts):
     from .pdf import write_pdf
-    write_pdf(a.emulate, t.sheets, getattr(a, "stock", None) or "letter")
+    write_pdf(a.emulate, t.sheets, opts.stock, opts.shift_in)
     print(f"wrote {a.emulate} ({len(t.sheets)} sheet(s))")
     for e in t.events:
         print(f"emulator: {e}")
@@ -211,11 +221,10 @@ def _emulated(t, a):
         print("emulator: no problems (no firmware wraps, every sheet fed out)")
 
 
-def _options(profile, a, top):
+def _options(profile, a, frame):
     from .job import PrintOptions
-    return PrintOptions.for_profile(profile, top_lines=top, eject=not a.no_eject,
-                                    line_pause_s=a.line_pause, paper=a.paper,
-                                    stock=getattr(a, "stock", None))
+    return PrintOptions.for_profile(profile, frame, eject=not a.no_eject,
+                                    line_pause_s=a.line_pause, paper=a.paper)
 
 
 def cmd_print(a) -> int:
@@ -229,8 +238,8 @@ def cmd_print(a) -> int:
         _print_issues(m, False)
         print("not printing because of the errors above (--force prints anyway)")
         return 1
-    opts = _options(m.profile, a, a.top)
-    t = _open(m.profile, a)
+    opts = _options(m.profile, a, m.frame)
+    t = _open(m.profile, a, opts)
     return _send(t, letters, m.profile, opts, a)
 
 
@@ -248,6 +257,7 @@ def cmd_status(a) -> int:
 
 
 def cmd_testpage(a) -> int:
+    from .frame import fit_page
     from .layout import Line, Page
     from .merge import Letter
     from .records import Record
@@ -259,8 +269,8 @@ def cmd_testpage(a) -> int:
             lines += [Line(), Line()]
         lines += PAGES[name](profile).lines
     letter = Letter(0, Record(0, {}), [], pages=[Page(1, lines)])
-    opts = _options(profile, a, a.top)
-    t = _open(profile, a)
+    opts = _options(profile, a, fit_page(None, profile, top_lines=a.top)[0])
+    t = _open(profile, a, opts)
     return _send(t, [letter], profile, opts, a)
 
 
@@ -335,8 +345,8 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--profile", help="typewriter profile id or .toml path")
     p.set_defaults(func=cmd_status)
 
-    p = sub.add_parser("testpage", help="type calibration patterns (margins, format, bold, charset)")
-    p.add_argument("patterns", nargs="+", choices=["margins", "format", "bold", "charset"])
+    p = sub.add_parser("testpage", help="type calibration patterns (margins, format, bold, charset, left)")
+    p.add_argument("patterns", nargs="+", choices=["margins", "format", "bold", "charset", "left"])
     _print_args(p, merge=False)
     p.set_defaults(func=cmd_testpage)
 

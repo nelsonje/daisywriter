@@ -119,6 +119,11 @@ class MainWindow(QMainWindow):
         self.profile_combo.activated.connect(lambda _: self.reload())
         files.addWidget(QLabel("Typewriter"), 0, 3)
         files.addWidget(self.profile_combo, 0, 4)
+        self.paper_label = QLabel("")
+        self.paper_label.setToolTip("the paper size and margins set in Word (Layout > Size and "
+                                    "Margins) for the template")
+        files.addWidget(QLabel("Paper"), 2, 0)
+        files.addWidget(self.paper_label, 2, 1, 1, 4)
         files.setColumnStretch(1, 1)
 
         options = QHBoxLayout()
@@ -457,6 +462,7 @@ class MainWindow(QMainWindow):
         elif self.template_edit.text() or self.data_edit.text():
             missing = [str(p) for p in (template, data) if str(p) not in ("", ".") and not p.is_file()]
             self.load_error = ("not found: " + ", ".join(missing)) if missing else ""
+        self.paper_label.setText(self.merge.frame.describe(self.merge.profile) if self.merge else "")
         self._fill_table(selected.number if selected else 1, kept)
         self._fill_issues()
 
@@ -610,14 +616,13 @@ class MainWindow(QMainWindow):
             return
         opts = self._options()
         sheets = emulate([letter], self.merge.profile, opts).sheets
-        self.preview.view.show_letter(sheets, letter, self.merge.profile, opts.stock, opts.top_lines)
+        self.preview.view.show_letter(sheets, letter, self.merge.profile, self.merge.frame)
         self.statusBar().showMessage(
             f"Letter {letter.number}: row {letter.record.row} of the spreadsheet, "
             f"{len(letter.pages)} page{'s' * (len(letter.pages) != 1)}", 5000)
 
     def _options(self) -> PrintOptions:
-        lay = self.merge.settings.layout
-        return PrintOptions.for_profile(self.merge.profile, stock=lay.stock, top_lines=lay.top_lines)
+        return PrintOptions.for_profile(self.merge.profile, self.merge.frame)
 
     # Dialogs (tests replace these)
 
@@ -763,7 +768,8 @@ class MainWindow(QMainWindow):
 
     def _emulated(self, emulator: Emulator, summary: str):
         from ..pdf import write_pdf
-        write_pdf(self.emulator_pdf, emulator.sheets, self._options().stock)
+        opts = self._options()
+        write_pdf(self.emulator_pdf, emulator.sheets, opts.stock, opts.shift_in)
         found = "\n".join(f"• {e}" for e in emulator.events) or "No problems found."
         if self.confirm("Emulator", f"{summary}\n\n{found}\n\nSaved {self.emulator_pdf.name}.",
                         "Open the PDF", "Close"):

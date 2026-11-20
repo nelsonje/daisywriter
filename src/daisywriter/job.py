@@ -17,9 +17,10 @@ import time
 from collections.abc import Callable
 from dataclasses import dataclass
 
+from .frame import Frame
 from .layout import Page
 from .merge import Letter
-from .profile import STOCKS, Profile
+from .profile import LETTER, Profile, Stock, inches
 from .render import CAN, FF, newline, passes, render_line
 from .transports import Transport, TransportError
 
@@ -46,19 +47,35 @@ class PrintCancelled(Exception):
 @dataclass
 class PrintOptions:
     paper: str = "single_sheet"  # or "continuous"
-    stock: str = "letter"
+    stock: Stock = LETTER
     top_lines: int = 6  # top margin: lines from the sheet's top edge to the first line
+    shift_in: float = 0.0  # single sheets go this far right of the paper guide
     eject: bool = True  # single sheets: feed to the end of the page afterwards
     line_pause_s: float = 0.0  # pause after each line (to lower the average power draw)
     timeout_s: float = 60.0  # per line
 
     @classmethod
-    def for_profile(cls, profile: Profile, **kw) -> PrintOptions:
+    def for_profile(cls, profile: Profile, frame: Frame | None = None, **kw) -> PrintOptions:
+        """Options from the profile, the letters' paper and margins, then kw."""
         base = cls(paper=profile.paper, line_pause_s=float(profile.raw.get("line_pause_s", 0.0)))
+        if frame is not None:
+            base.stock, base.top_lines, base.shift_in = frame.stock, frame.top_lines, frame.shift_in
         for k, v in kw.items():
             if v is not None:
                 setattr(base, k, v)
         return base
+
+
+def sheet_prompt(opts: PrintOptions, where: str) -> str:
+    sheet = "a sheet" if opts.stock == LETTER else f"a sheet of {opts.stock.label} paper"
+    place = ""
+    if opts.shift_in:
+        place = (f" Put its left edge {inches(opts.shift_in)} inch to the right of the paper guide "
+                 "(or of 10 on the scale).")
+    else:
+        place = " Put its left edge against the paper guide (or at 10 on the scale)."
+    return (f"Insert {sheet} for {where} until the rollers above the printing point catch it."
+            f"{place} Then continue?")
 
 
 def wait_ready(transport: Transport, ask: Ask):
@@ -74,7 +91,7 @@ def print_page(transport: Transport, page: Page, profile: Profile, opts: PrintOp
                report: Report = _ignore, label: str = "", stop: Stop = _never,
                progress: Callable[[int, int], None] = _ignore):
     nl = newline(profile)
-    page_lines = round(STOCKS[opts.stock].length_in * profile.lines_per_inch)
+    page_lines = round(opts.stock.length_in * profile.lines_per_inch)
     # a loaded sheet already sits load_offset_lines below its top edge (single sheets)
     loaded = profile.load_offset_lines if opts.paper == "single_sheet" else 0
     if opts.top_lines > loaded:
@@ -108,9 +125,7 @@ def print_letters(transport: Transport, letters: list[Letter], profile: Profile,
         for letter in letters:
             for page in letter.pages:
                 where = f"letter {letter.number}, page {page.number} of {len(letter.pages)}"
-                if opts.paper == "single_sheet" and not ask(
-                        f"Insert a sheet for {where} until the rollers above the printing "
-                        "point catch it, then continue?"):
+                if opts.paper == "single_sheet" and not ask(sheet_prompt(opts, where)):
                     raise PrintCancelled()
                 if opts.paper == "single_sheet" and hasattr(transport, "load_sheet"):
                     transport.load_sheet()  # the emulator needs to know

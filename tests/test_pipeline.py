@@ -93,7 +93,7 @@ def _format_letter(tmp_path, settings, text):
     d.add_paragraph(text)
     d.save(str(tmp_path / "f.docx"))
     m = run(tmp_path / "f.docx", samples.make_data(tmp_path / "d.xlsx"), settings)
-    return texts(m.letters[0])[0]
+    return texts(m.letters[0])[0].lstrip()  # python-docx sets 1.25 in margins: a 3-column indent
 
 
 def test_values_show_as_formatted_in_excel(tmp_path, settings):

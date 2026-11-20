@@ -63,19 +63,24 @@ Printing needs a USB printer-class parallel adapter. On macOS and Linux it needs
 ```sh
 uv run daisywriter status                          # is the typewriter connected and on-line? (exit 1 if not)
 uv run daisywriter probe                           # how far ahead of the typewriter the adapter takes data
-uv run daisywriter testpage margins format bold    # calibration patterns
+uv run daisywriter testpage margins format bold    # calibration patterns (also charset, left)
 uv run daisywriter print samples/letter-template.docx samples/letter-data.xlsx --letters 1
 uv run daisywriter print ... --dry-run out.bin     # write the bytes to a file instead
 uv run daisywriter print ... --emulate out.pdf     # type on an emulated typewriter; draw the sheets
 uv run daisywriter print ... --typing-errors 2      # about 2 corrected typing errors per 100 words
 ```
-Before each page, insert a sheet until the rollers above the printing point catch it, with
-the typewriter ON LINE. daisywriter feeds to the 1-inch top margin, types the page, then
-rolls the sheet out.
+Before each page, insert a sheet against the paper guide (or at 10 on the scale, where the guide
+is broken) until the rollers above the printing point catch it, with the typewriter ON LINE.
+daisywriter feeds to the top margin, types the page, then rolls the sheet out.
+
+The paper size and margins come from the template's page setup in Word (Layout > Size and
+Margins), inside what the typewriter allows: lines end no further than 7.5 inches from the
+paper's left edge, the top margin is at least ⅔ inch, and a left margin under 1 inch means
+putting the sheet that much right of the paper guide (daisywriter says how far).
 
 Useful options: `--profile olympia-electronic-compact-2`, `--today 2026-11-08`,
 `--page-numbers after-first --page-number-format "{{LastName}} - Page {page} - {{Today}}"`,
-`--no-justify`, `--top`/`--bottom` (lines), `--stock letter|legal|a4`.
+`--no-justify`, `--top`/`--bottom` (lines), `--paper-size letter|legal|a4|6.125x11`.
 
 ## Writing a template
 - Merge fields: Word's own **Insert Merge Field**, or typed `{{FieldName}}` / `«FieldName»`.

@@ -82,6 +82,23 @@ margins, so it doesn't matter where Word breaks the lines.
 plain text. Headers and footers are skipped (use pre-printed letterhead).
 Tables and pictures can't be typed: daisywriter will point them out.
 
+**Paper size and margins** come from Word. Set them in the template with
+**Layout > Size** (for an unusual size, **More Paper Sizes…**) and
+**Layout > Margins**, and save. daisywriter shows what it found on the
+**Paper** line at the top of its window. A few limits come from the typewriter:
+
+- The text can't reach further than 7½ inches from the paper's left edge. For
+  letter paper, that's a right margin of at least 1 inch.
+- The top margin is at least ⅔ inch: that's where the typewriter holds a sheet
+  it has just pulled in.
+- For a left margin under 1 inch, daisywriter asks you to put each sheet a
+  little to the right of the paper guide (or of 10 on the scale), and says
+  how far.
+
+If a margin can't be used as set, daisywriter says so in the box at the
+bottom and uses the nearest one it can. Writing the template in **Courier
+New**, 12 pt, makes the page in Word look much like the typed one.
+
 ## 4. Make the list in Excel
 
 - The **first row** holds the column names, the ones you use in the letter.
@@ -107,8 +124,10 @@ Tables and pictures can't be typed: daisywriter will point them out.
 4. Tick the letters to print. The box at the top of the list ticks or unticks
    them all. **Check not printed** ticks only the ones still to do.
 5. Click **Print checked letters**.
-6. For each page, daisywriter asks for paper. Put a sheet in **just until the
-   rollers above the typing point catch it**, then click **Continue**.
+6. For each page, daisywriter asks for paper. Put a sheet in, against the
+   paper guide on the left (if the guide is missing or broken, line the
+   sheet's left edge up with **10** on the scale), **just until the rollers
+   above the typing point catch it**, then click **Continue**.
    daisywriter moves it down to the top margin, types the page, and feeds it
    out when it's done.
 7. To stop, click **Stop**. The typewriter finishes the line it's typing, then stops.

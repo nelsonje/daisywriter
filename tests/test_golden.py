@@ -28,7 +28,7 @@ def check(name: str, text: str, request):
 
 
 def preview(m) -> str:
-    return render_text(m.letters, len(m.letters), m.profile.line_width)
+    return render_text(m.letters, len(m.letters), m.frame.columns)
 
 
 def long_letter(path):

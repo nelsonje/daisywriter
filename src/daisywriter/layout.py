@@ -1,16 +1,19 @@
 """Re-wrap merged paragraphs to the typewriter's line width and split them into pages.
 
 Word's own line breaks are ignored: each paragraph is word-wrapped again at the
-profile's pitch and margins. Column 0 of a Line is the typewriter's left margin.
-Line 0 of a Page is the first typed line below the top margin.
+profile's pitch and the margins in the template's page setup (frame.py).
+Column 0 of a Line is the typewriter's left margin, so lines start with
+frame.indent blank cells. Line 0 of a Page is the first typed line below the
+top margin.
 """
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 
 from . import issues as I
+from .frame import Frame, fit_page
 from .model import Align, Paragraph, Role
-from .profile import STOCKS, Profile
+from .profile import Profile
 
 MIN_LINE_WIDTH = 10
 
@@ -59,9 +62,10 @@ class PageNumbers:
 
 @dataclass
 class LayoutSettings:
-    stock: str = "letter"
-    top_lines: int = 6
-    bottom_lines: int = 6
+    # None: from the template's page setup (Word's Layout > Size and Margins)
+    stock: str | None = None  # letter, legal, a4 or WIDTHxLENGTH in inches
+    top_lines: int | None = None
+    bottom_lines: int | None = None
     justify: bool = True  # False types justified paragraphs ragged-right
     spacing_threshold: float = 0.5  # fraction of a line at which Word spacing becomes a blank line
     page_numbers: PageNumbers = field(default_factory=PageNumbers)
@@ -92,11 +96,10 @@ def _tokens(cells: list[Cell]):
 
 
 class _Wrapper:
-    def __init__(self, p: Paragraph, profile: Profile, issues: list, where: str):
+    def __init__(self, p: Paragraph, profile: Profile, issues: list, where: str, width: int):
         self.profile = profile
         self.issues = issues
         self.where = where
-        width = profile.line_width
         left = max(0, profile.pt_to_cols(p.left_pt))
         first = max(0, left + profile.pt_to_cols(p.first_line_pt))
         self.end_col = width - max(0, profile.pt_to_cols(p.right_pt))
@@ -225,12 +228,13 @@ def _align(w: _Wrapped, align: Align, end_col: int, justify: bool, flip: bool) -
 
 
 def wrap_paragraph(p: Paragraph, profile: Profile, settings: LayoutSettings,
-                   issues: list, where: str) -> list[tuple[Line, str]]:
-    """Return (line, end) pairs; end is "page" where a forced page break follows."""
+                   issues: list, where: str, width: int | None = None) -> list[tuple[Line, str]]:
+    """Return (line, end) pairs; end is "page" where a forced page break follows.
+    width: characters per line (default: the typewriter's margins)."""
     cells = [Cell(ch, s.bold, s.underline, s.body, s.strike, s.over) for s in p.spans for ch in s.text]
     if _is_empty(p):
         return [(Line([], p.index, p.role), "end")]
-    wrapper = _Wrapper(p, profile, issues, where)
+    wrapper = _Wrapper(p, profile, issues, where, width or profile.line_width)
     wrapped = wrapper.run(cells)
     out = []
     for n, w in enumerate(wrapped):
@@ -262,7 +266,7 @@ def _gap_lines(points: float, profile: Profile, threshold: float) -> int:
 
 
 def _blocks(paragraphs: list[Paragraph], profile: Profile, settings: LayoutSettings,
-            issues: list, where: str) -> list[_Block]:
+            issues: list, where: str, width: int) -> list[_Block]:
     """Wrap paragraphs into blocks of lines.
 
     Empty paragraphs don't become blocks: their height joins Word's space
@@ -293,7 +297,7 @@ def _blocks(paragraphs: list[Paragraph], profile: Profile, settings: LayoutSetti
         keep = p.keep_with_next or (chain_from is not None and chain_from <= i < last)
         lines: list[Line] = []
         first_block = True
-        for line, end in wrap_paragraph(p, profile, settings, issues, f"{where}, paragraph {p.index}"):
+        for line, end in wrap_paragraph(p, profile, settings, issues, f"{where}, paragraph {p.index}", width):
             lines.append(line)
             if end == "page":
                 blocks.append(_Block(lines, gap if first_block else 0, False,
@@ -383,30 +387,41 @@ def _number_line(text: str, width: int, align: str) -> Line:
     return Line([BLANK] * pad + [Cell(ch) for ch in text])
 
 
+def _indented(line: Line, indent: int) -> Line:
+    if not line.cells:
+        return line
+    return Line([BLANK] * indent + line.cells, line.para, line.role, line.raw)
+
+
 def layout_letter(paragraphs: list[Paragraph], profile: Profile, settings: LayoutSettings,
                   page_number_text: str | None = None, where: str = "",
-                  letter: int | None = None) -> tuple[list[Page], list[I.Issue]]:
+                  letter: int | None = None, frame: Frame | None = None) -> tuple[list[Page], list[I.Issue]]:
+    """frame: where the text goes (default: the typewriter's margins on letter paper,
+    or the paper and margins in settings)."""
     issues: list[I.Issue] = []
-    stock = STOCKS[settings.stock]
-    page_lines = round(stock.length_in * profile.lines_per_inch)
-    body_lines = page_lines - settings.top_lines - settings.bottom_lines
+    if frame is None:
+        frame, _ = fit_page(None, profile, settings.stock, settings.top_lines, settings.bottom_lines)
+    page_lines = round(frame.stock.length_in * profile.lines_per_inch)
+    body_lines = page_lines - frame.top_lines - frame.bottom_lines
     pn = settings.page_numbers
 
     def capacity(page: int) -> int:
         return max(1, body_lines - (2 if pn.shown_on(page) else 0))
 
-    blocks = _blocks(paragraphs, profile, settings, issues, where)
+    blocks = _blocks(paragraphs, profile, settings, issues, where, frame.width)
     raw_pages = paginate(blocks, capacity)
 
     pages = []
     for n, lines in enumerate(raw_pages, start=1):
         if pn.shown_on(n):
             num = _number_line((page_number_text or pn.format).replace("{page}", str(n)),
-                               profile.line_width, pn.align)
+                               frame.width, pn.align)
             if pn.position == "top":
                 lines = [num, Line()] + lines
             else:
                 lines = lines + [Line() for _ in range(capacity(n) - len(lines))] + [Line(), num]
+        if frame.indent:
+            lines = [_indented(ln, frame.indent) for ln in lines]
         pages.append(Page(n, lines))
 
     closing_pages = {p.number for p in pages for ln in p.lines if ln.role is Role.CLOSING}
