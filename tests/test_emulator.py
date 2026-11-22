@@ -17,7 +17,7 @@ from daisywriter.layout import Cell, Line, Page, PageNumbers
 from daisywriter.merge import Letter
 from daisywriter.pdf import write_pdf
 from daisywriter.pipeline import run
-from daisywriter.profile import load_profile
+from daisywriter.profile import builtin_profiles, load_profile
 from daisywriter.records import Record
 from daisywriter.render import bold_restrikes, render_line
 from daisywriter.transports.emulator import Emulator
@@ -192,7 +192,7 @@ def test_pdf(tmp_path):
     assert b"/Count 1" in data and b"(\\()" in data and b"(H)" in data
 
 
-@pytest.mark.parametrize("profile", [SWINTEC, OLYMPIA], ids=lambda p: p.id)
+@pytest.mark.parametrize("profile", list(builtin_profiles().values()), ids=lambda p: p.id)
 @pytest.mark.parametrize("name", ["format", "bold", "charset"])
 def test_test_pages_fit_and_name_every_character(profile, name):
     """Only the margin probe may reach the firmware's wrap, and every byte a test
@@ -210,3 +210,23 @@ def test_question_mark_is_an_ordinary_character():
     e = typed(b"Why?\n", OLYMPIA)
     assert not [ev for ev in e.events if "doesn't describe" in ev]
     assert "?" in [ch for chars in row(e).values() for ch in chars]
+
+
+@pytest.mark.parametrize("profile", list(builtin_profiles().values()), ids=lambda p: p.id)
+def test_special_characters_round_trip(profile):
+    """Each mapped character, typed through the firmware model, lands as itself."""
+    text = "".join(profile.charset)
+    e = Emulator(profile)
+    e.load_sheet()
+    e.write(render_line(Line([Cell(ch) for ch in text]), profile))
+    line = max(r for (r, _c) in e.sheet.grid())
+    got = "".join(chars[0] for _c, chars in sorted(row(e, line).items()))
+    assert got == text
+    assert not [ev for ev in e.events if "doesn't describe" in ev]
+
+
+def test_swintec_firmwares_differ_where_the_notes_say():
+    cmp_, cm = load_profile("swintec-1146cmp"), load_profile("swintec-1146cm-3z28")
+    assert cmp_.charset.get("|") is None and cmp_.can_type("|")  # 335-U: | is a bar
+    assert cm.charset["|"] == b"," and cm.charset["¶"] == b"|"  # 3Z28: | prints ¶
+    assert cmp_.charset["£"] == b"*" and cm.charset["£"] == b"}"

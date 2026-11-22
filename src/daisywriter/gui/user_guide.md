@@ -5,7 +5,8 @@ in Word, list the people it goes to in Excel, and daisywriter types one letter
 per person, filling in their name, address and anything else from the
 spreadsheet.
 
-It works with the **Swintec 1146 CMP** and the **Olympia Electronic Compact 2**, connected
+It works with the **Swintec 1146 CMP**, the **Swintec 1146 CM** and the **Olympia Electronic
+Compact 2**, connected
 to the computer with a USB-to-parallel cable.
 
 ## 1. Install daisywriter
@@ -51,8 +52,11 @@ folder in your Documents. (They're also on the download page, as
 3. Turn the typewriter **off and on again**. This puts the margins back where
    daisywriter expects them. Don't change the margins.
 4. Press **ON LINE** so its light comes on.
-5. In daisywriter, click **Check typewriter** (bottom left). A green dot and
-   *"ready"* mean everything is connected.
+5. In daisywriter, choose your typewriter in the **Typewriter** list at the top.
+   The model is on the label: a 1146 **CMP** and a 1146 **CM** type some special
+   characters (like ½ and §) differently.
+6. Click **Check typewriter** (bottom left). A green dot and *"ready"* mean
+   everything is connected.
 
 ## 3. Write the letter in Word
 

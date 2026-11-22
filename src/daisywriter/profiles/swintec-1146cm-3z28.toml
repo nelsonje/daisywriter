@@ -1,0 +1,54 @@
+# Swintec 1146 CM (Nakajima), firmware 3Z28 (EPROM "3Z28 / 2480131"), built-in
+# parallel port. Probably an older revision of the 1146 CMP's firmware 335-U.
+# Its ASCII -> petal table differs from the 335-U's, so the character map is
+# from FIRMWARE_NOTES.md in the olympia-compact-electronic-2 repository
+# ("Swintec 1146 CM, serial 41317794: firmware 3Z28"). That map is a prediction
+# from the firmware, except that | printing ¶ was seen on paper (2026-11-18).
+# Paper handling, margins and bold were measured on this machine (the second
+# Swintec in docs/PLAN.md §16.1) and match the 1146 CMP.
+name = "Swintec 1146 CM (firmware 3Z28)"
+transport = "usb_printer"
+usb = { vid = 0x067B, pid = 0x2305 }
+paper = "single_sheet"
+# Loading a sheet: insert it until the rollers above the printing point catch it.
+# The printing point is then this many lines below the top edge.
+load_offset_lines = 4
+# After the bottom edge reaches the printing point, feed this much more so the
+# sheet clears those rollers. On this machine the sheet can slip on the platen
+# once it's past the printing point (2026-11-18); a hand on the rollers helps.
+eject_extra_lines = 5
+
+pitch_cpi = 10
+lines_per_inch = 6
+margins = { left = 10, right = 75 }
+# The same 66 columns as the 1146 CMP (the firmware's margin handling is unchanged).
+right_guard = 0
+
+newline = "\n"
+# Measured 2026-11-18 with `testpage bold`: a re-strike typed right to left is
+# clearly bolder than strikes from the left, as on the 1146 CMP.
+bold = "overstrike"
+bold_restrikes = ["right"]
+underline = "overprint"
+strikethrough = "-"            # overtyped on struck-out text
+line_pause_s = 0.0
+
+# ASCII bytes that print a different glyph on this wheel, so the ASCII
+# character itself can't be typed. < > print as themselves; | prints ¶.
+unavailable = "|^~`\\{}"
+
+# Unicode character -> bytes sent. SO (\u000E) ... SI (\u000F) selects the extra petals.
+[charset]
+"¶" = "|"
+"¼" = "^"
+"¢" = "~"
+"°" = "`"
+"½" = "\\"
+"§" = "{"
+"£" = "}"
+"²" = "\u000E*\u000F"
+"³" = "\u000E+\u000F"
+"|" = "\u000E,\u000F"
+"®" = "\u000E-\u000F"
+"±" = "\u000E.\u000F"
+"•" = "\u000E/\u000F"

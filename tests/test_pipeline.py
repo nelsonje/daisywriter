@@ -65,15 +65,16 @@ def test_untypeable_character_is_an_error(tmp_path, settings):
                                                           None, None, None, None, None,
                                                           dt.date(2026, 1, 1), 1]])
     d = docx.Document()
-    d.add_paragraph("{{Company}} 50°")
+    d.add_paragraph("{{Company}} 50° 5€")
     d.save(str(tmp_path / "t.docx"))
     m = run(tmp_path / "t.docx", path, settings)
     errors = [i.message for i in m.all_issues() if i.level is Level.ERROR]
-    assert any('"°"' in e for e in errors)  # the Swintec map has no degree sign yet
+    assert len(errors) == 1 and '"€"' in errors[0]  # no wheel has €; the Swintec has ° and < >
     settings.profile = "olympia-electronic-compact-2"
     m = run(tmp_path / "t.docx", path, settings)
     errors = [i.message for i in m.all_issues() if i.level is Level.ERROR]
-    assert len(errors) == 2 and all('"<"' in e or '">"' in e for e in errors)  # ° is on this wheel
+    flagged = {c for c in "<>€°" if any(f'"{c}"' in e for e in errors)}
+    assert len(errors) == 3 and flagged == set("<>€")  # ° is on this wheel; < > aren't
 
 
 def test_page_number_format_uses_fields(sample_dir, settings):
