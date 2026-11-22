@@ -28,7 +28,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from ..profile import STOCKS, Profile
+from ..profile import Profile, Stock, paper_size
 from .base import PortStatus
 
 STEPS_PER_INCH = 60  # carrier: one step is 1/60 in
@@ -66,11 +66,11 @@ class Emulator:
     """A transport that types onto Sheets. events lists anything a real
     typewriter would get wrong or that the model can't be sure of."""
 
-    def __init__(self, profile: Profile, paper: str | None = None, stock: str = "letter"):
+    def __init__(self, profile: Profile, paper: str | None = None, stock: str | Stock = "letter"):
         self.name = f"emulated {profile.name}"
         self.profile = profile
         self.paper = paper or profile.paper
-        self.length = round(STOCKS[stock].length_in * UNITS_PER_INCH)
+        self.length = round(paper_size(stock).length_in * UNITS_PER_INCH)
         self.unit_line = UNITS_PER_INCH // profile.lines_per_inch
         self.rollers = profile.load_offset_lines * self.unit_line  # above the printing point
         self.steps = round(STEPS_PER_INCH / profile.pitch_cpi)

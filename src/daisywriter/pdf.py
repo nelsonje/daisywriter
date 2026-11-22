@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from .profile import STOCKS
+from .profile import Stock, paper_size
 from .transports.emulator import STEPS_PER_INCH, UNITS_PER_INCH, Sheet
 
 PT = 72  # points per inch
@@ -26,6 +26,7 @@ def _escape(text: str) -> bytes:
 
 def page_content(sheet: Sheet, height_pt: float, paper_left_in: float = 0.0,
                  play_in: float = CARRIER_PLAY_IN) -> bytes:
+    """paper_left_in: where the carrier's column 0 is, in inches right of the sheet's left edge."""
     out = [b"/GS1 gs BT /F1 12 Tf"]
     for s in sheet.strikes:
         x = (paper_left_in + s.x / STEPS_PER_INCH + (play_in if s.from_right else 0)) * PT
@@ -35,11 +36,12 @@ def page_content(sheet: Sheet, height_pt: float, paper_left_in: float = 0.0,
     return b"\n".join(out)
 
 
-def write_pdf(path: str | Path, sheets: list[Sheet], stock: str = "letter",
-              paper_left_in: float = 0.0, play_in: float = CARRIER_PLAY_IN) -> None:
-    """paper_left_in: where the sheet's left edge sits relative to the
-    carrier's column 0 (the left stop); 0 puts margin column 10 1 inch in."""
-    w, h = STOCKS[stock].width_in * PT, STOCKS[stock].length_in * PT
+def write_pdf(path: str | Path, sheets: list[Sheet], stock: str | Stock = "letter",
+              shift_in: float = 0.0, play_in: float = CARRIER_PLAY_IN) -> None:
+    """shift_in: how far right of the paper guide the sheets were put; with 0,
+    margin column 10 is 1 inch in."""
+    sheet_size = paper_size(stock)
+    w, h = sheet_size.width_in * PT, sheet_size.length_in * PT
     objects: list[bytes] = [
         b"<< /Type /Catalog /Pages 2 0 R >>",
         b"",  # pages, filled in below
@@ -48,7 +50,7 @@ def write_pdf(path: str | Path, sheets: list[Sheet], stock: str = "letter",
     ]
     kids = []
     for sheet in sheets or [Sheet(1, 0)]:
-        content = page_content(sheet, h, paper_left_in, play_in)
+        content = page_content(sheet, h, -shift_in, play_in)
         objects.append(b"<< /Length %d >>\nstream\n%s\nendstream" % (len(content), content))
         objects.append(b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 %.2f %.2f] /Contents %d 0 R "
                        b"/Resources << /Font << /F1 3 0 R >> /ExtGState << /GS1 4 0 R >> >> >>"

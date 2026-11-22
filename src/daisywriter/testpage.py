@@ -6,6 +6,9 @@ bold, underline, both and strikethrough, next to plain text, to judge overstrike
 installed ribbon. "bold" compares ways of re-striking bold text, including
 strikes that reach each letter from the right, where play in the carrier
 drive might shift them enough to thicken the strokes. "charset" types every character the profile can type.
+"left" starts lines left of the left margin with backspaces, which the
+firmware allows down to the carriage's leftmost column: the | in each line
+should land exactly below the first one, at the left margin.
 """
 from __future__ import annotations
 
@@ -13,7 +16,7 @@ import textwrap
 
 from .layout import Cell, Line, Page
 from .profile import Profile
-from .render import CR, encode, reverse_pass
+from .render import BS, CR, encode, reverse_pass
 
 
 def _text(s: str, bold=False, underline=False, strike=False) -> list[Cell]:
@@ -100,5 +103,19 @@ def charset_page(profile: Profile) -> Page:
     return Page(1, lines)
 
 
+LEFT_STEPS = (1, 3, 5, 8)  # 8 stays 0.2 in inside a sheet against the guide (margin at 1 in)
+
+
+def left_page(profile: Profile) -> Page:
+    lines = [Line(_text("Left of the margin: each line below starts with backspaces, so it")),
+             Line(_text("begins left of the left margin. The bars should all line up with")),
+             Line(_text("the first one, at the left margin:")), Line(),
+             Line(_text("|  the left margin"))]
+    for k in LEFT_STEPS:
+        text = ruler(k) + f"|  {k} backspace{'s' * (k != 1)}"
+        lines.append(Line(_text(" " * k + text[k:]), raw=BS * k + encode(text, profile)))
+    return Page(1, lines)
+
+
 PAGES = {"margins": margins_page, "format": format_page, "bold": bold_page,
-         "charset": charset_page}
+         "charset": charset_page, "left": left_page}

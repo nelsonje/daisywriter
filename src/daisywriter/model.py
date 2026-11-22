@@ -94,12 +94,24 @@ class Paragraph:
         return p
 
 
+@dataclass(frozen=True)
+class PageSetup:
+    """The template's paper size and margins in Word (Layout > Size, Margins), in inches."""
+    width_in: float
+    length_in: float
+    left_in: float
+    right_in: float
+    top_in: float
+    bottom_in: float
+
+
 @dataclass
 class Template:
     path: str
     paragraphs: list[Paragraph]
     issues: list = field(default_factory=list)
     body_source: str = "none"  # "markers" | "auto" | "none"
+    page: PageSetup | None = None  # None if the document doesn't say
 
     def fields(self) -> list[FieldRef]:
         """Merge fields that need a data column, in order of first use."""

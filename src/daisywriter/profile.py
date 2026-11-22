@@ -27,12 +27,56 @@ class Stock:
     width_in: float
     length_in: float
 
+    @property
+    def label(self) -> str:
+        size = f"{inches(self.width_in)} × {inches(self.length_in)} in"
+        return f"{self.name.title() if self.name != 'a4' else 'A4'} ({size})" if self.name in STOCKS else size
+
 
 STOCKS = {
     "letter": Stock("letter", 8.5, 11.0),
     "legal": Stock("legal", 8.5, 14.0),
     "a4": Stock("a4", 8.27, 11.69),
 }
+LETTER = STOCKS["letter"]
+
+
+def sized(width_in: float, length_in: float) -> Stock:
+    """A named stock if the size is one (within 1/50 in), else a custom one."""
+    for s in STOCKS.values():
+        if abs(s.width_in - width_in) < 0.02 and abs(s.length_in - length_in) < 0.02:
+            return s
+    return Stock("custom", round(width_in, 3), round(length_in, 3))
+
+
+def paper_size(spec: str | Stock) -> Stock:
+    """letter, legal, a4, or WIDTHxLENGTH in inches (e.g. 6.125x11)."""
+    if isinstance(spec, Stock):
+        return spec
+    key = spec.strip().lower()
+    if key in STOCKS:
+        return STOCKS[key]
+    w, sep, h = key.replace(" ", "").replace("×", "x").partition("x")
+    try:
+        width, length = float(w), float(h)
+    except ValueError:
+        width = length = 0
+    if not sep or not (1 <= width <= 30 and 1 <= length <= 40):
+        raise ValueError(f"unknown paper size {spec!r}; use {', '.join(STOCKS)} or WIDTHxLENGTH "
+                         "in inches, e.g. 6.125x11")
+    return sized(width, length)
+
+
+_FRACTIONS = {8: "⅛¼⅜½⅝¾⅞", 6: "⅙⅓½⅔⅚"}  # eighths of an inch, and sixths (lines at 6 lpi)
+
+
+def inches(x: float) -> str:
+    """Inches for people: 6⅛, ¾, ⅔, 1, 8.27."""
+    for n, signs in _FRACTIONS.items():
+        if abs(x * n - round(x * n)) < 0.01:
+            whole, part = divmod(round(x * n), n)
+            return (str(whole) if whole or not part else "") + (signs[part - 1] if part else "")
+    return f"{x:.2f}".rstrip("0").rstrip(".")
 
 
 @dataclass(frozen=True)
@@ -60,6 +104,11 @@ class Profile:
         column itself is usable.
         """
         return self.margin_right - self.margin_left + 1 - self.right_guard
+
+    @property
+    def text_end(self) -> int:
+        """The column after the last one the typewriter types without wrapping."""
+        return self.margin_left + self.line_width
 
     @property
     def line_pt(self) -> float:

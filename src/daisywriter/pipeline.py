@@ -6,10 +6,11 @@ from pathlib import Path
 
 from . import issues as I
 from .errors import ErrorSettings, add_typing_errors, seed_for
+from .frame import Frame, fit_page
 from .layout import LayoutSettings, layout_letter
 from .merge import Letter, MergeSettings, merge_letter, merge_text
 from .model import Template
-from .profile import STOCKS, Profile, load_profile
+from .profile import Profile, load_profile
 from .records import DataSet, load_records, normalize
 from .region import apply_regions
 from .session import letter_key
@@ -34,6 +35,7 @@ class Merge:
     settings: Settings
     letters: list[Letter]
     issues: list[I.Issue]  # template, data and cross-checks; letters carry their own
+    frame: Frame = field(default_factory=Frame)  # paper and margins
 
     def all_issues(self) -> list[I.Issue]:
         return self.issues + [i for letter in self.letters for i in letter.issues]
@@ -63,17 +65,6 @@ def check_fields(template: Template, dataset: DataSet) -> list[I.Issue]:
     return issues
 
 
-def check_profile(profile: Profile, settings: Settings) -> list[I.Issue]:
-    stock = STOCKS[settings.layout.stock]
-    issues = []
-    paper_cols = int(stock.width_in * profile.pitch_cpi)
-    if profile.margin_right > paper_cols:
-        issues.append(I.warning(
-            f"the right margin (column {profile.margin_right}) is past the edge of "
-            f"{stock.name} paper ({paper_cols} columns at {profile.pitch_cpi} cpi)", "profile"))
-    return issues
-
-
 def run(template_path: str | Path, data_path: str | Path, settings: Settings | None = None) -> Merge:
     settings = settings or Settings()
     profile = load_profile(settings.profile)
@@ -81,7 +72,10 @@ def run(template_path: str | Path, data_path: str | Path, settings: Settings | N
     dataset = load_records(data_path, settings.sheet)
     issues = list(template.issues) + list(dataset.issues)
     issues += check_fields(template, dataset)
-    issues += check_profile(profile, settings)
+    lay = settings.layout
+    frame, page_issues = fit_page(template.page, profile, lay.stock, lay.top_lines, lay.bottom_lines)
+    issues.append(I.info(frame.describe(profile), "page setup"))
+    issues += page_issues
     has_body = any(s.body for p in template.paragraphs for s in p.spans)
     if settings.errors.enabled and not has_body:
         issues.append(I.warning("typing errors are on, but the letter body wasn't found, so none are added",
@@ -102,7 +96,7 @@ def run(template_path: str | Path, data_path: str | Path, settings: Settings | N
             letter.page_number_text = merge_text(pn.format, record, dataset, settings.merge)
         letter.pages, layout_issues = layout_letter(
             letter.paragraphs, profile, settings.layout, letter.page_number_text,
-            f"letter {n} (row {record.row})", n)
+            f"letter {n} (row {record.row})", n, frame)
         letter.issues += layout_issues
         letters.append(letter)
-    return Merge(template, dataset, profile, settings, letters, issues)
+    return Merge(template, dataset, profile, settings, letters, issues, frame)

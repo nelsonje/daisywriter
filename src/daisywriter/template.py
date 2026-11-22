@@ -13,7 +13,7 @@ import docx
 from docx.oxml.ns import qn
 
 from . import issues as I
-from .model import Align, FieldRef, Paragraph, Span, Template
+from .model import Align, FieldRef, PageSetup, Paragraph, Span, Template
 
 TWIPS_PER_PT = 20
 
@@ -255,6 +255,7 @@ class _Reader:
         if dts is not None and dts.get(qn("w:val"), "").isdigit() and int(dts.get(qn("w:val"))) > 0:
             self.default_tab_pt = int(dts.get(qn("w:val"))) / TWIPS_PER_PT
         self.paragraphs: list[Paragraph] = []
+        self.page = self._page_setup(document)
         self._check_sections(document)
         self._walk_blocks(document.element.body)
         for p in self.paragraphs:
@@ -263,7 +264,24 @@ class _Reader:
                 self.issues.append(I.warning(
                     "has '{{' or '}}' that isn't a complete placeholder; check for a typo",
                     f"paragraph {p.index}"))
-        return Template(str(self.path), self.paragraphs, self.issues)
+        return Template(str(self.path), self.paragraphs, self.issues, page=self.page)
+
+    def _page_setup(self, document) -> PageSetup | None:
+        """The first section's paper size and margins. Letters are typed one way
+        throughout, so other sections' differences are only reported."""
+        setups = []
+        for section in document.sections:
+            sizes = [section.page_width, section.page_height, section.left_margin,
+                     section.right_margin, section.top_margin, section.bottom_margin]
+            if None in sizes:
+                setups.append(None)
+                continue
+            setups.append(PageSetup(*(round(x.inches, 3) for x in sizes)))
+        if len(set(setups)) > 1:
+            self.note("sections", I.warning(
+                "the template's sections have different paper sizes or margins; the first "
+                "section's are used for the whole letter", "template"))
+        return setups[0] if setups else None
 
     def _check_sections(self, document):
         for section in document.sections:

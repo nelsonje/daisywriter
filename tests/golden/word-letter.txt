@@ -1,240 +1,245 @@
 Letter 1 of 5 · row 2 · Eleanor Whitfield · page 1 of 1
-  ┌──────────────────────────────────────────────────────────────────┐
-  │                                        Hollis Typewriter Repair  │
-  │                                        19 Platen Lane            │
-  │                                        Ames, Iowa  12345         │
-  │                                                                  │
-  │                                                                  │
-  │Eleanor Whitfield                                                 │
-  │Whitfield & Daughters Stationery                                  │
-  │1427 Maple Avenue                                                 │
-  │Suite 200                                                         │
-  │Springfield, IL  62704                                            │
-  │                                                                  │
-  │                                                                  │
-  │RE: Your order A-10233                                            │
-  │                                                                  │
-  │                                                                  │
-  │Dear Eleanor,                                                     │
-  │                                                                  │
-┃ │     Thank you for ordering the Smith-Corona Galaxie 12 on        │
-┃ │10/14/2026. We are pleased to tell you that the machine has been  │
-┃ │inspected, cleaned, and adjusted in our shop, and that it left    │
-┃ │here today by parcel post.                                        │
-  │                                                                  │
-┃ │     Your invoice total is $89.50. Please note that the machine   │
-┃ │comes with a fabric ribbon; carbon film ribbons are not compatible│
-  │                                                    ‾‾‾‾‾‾‾‾‾‾‾‾‾‾│
-┃ │with this model.                                                  │
-  │                                                                  │
-┃ │     If you have any questions, please write to us at the address │
-┃ │above. We hope you enjoy many years of happy typing.              │
-  │                                                                  │
-  │                              Sincerely,                          │
-  │                                                                  │
-  │                                                                  │
-  │                                                                  │
-  │                                                                  │
-  │                              Margaret Hollis                     │
-  │                              Service Manager                     │
-  │                                                                  │
-  │                                                                  │
-  │     "A typewriter that is cleaned once a year will outlast its   │
-  │     owner." - our founder, 1952                                  │
-  │                                                                  │
-  │                                                                  │
-  │Order number:  A-10233                                            │
-  │Shipped:       November 8, 2026                                   │
-  └──────────────────────────────────────────────────────────────────┘
+  ┌─────────────────────────────────────────────────────────────────┐
+  │                                        Hollis Typewriter Repair │
+  │                                        19 Platen Lane           │
+  │                                        Ames, Iowa  12345        │
+  │                                                                 │
+  │                                                                 │
+  │Eleanor Whitfield                                                │
+  │Whitfield & Daughters Stationery                                 │
+  │1427 Maple Avenue                                                │
+  │Suite 200                                                        │
+  │Springfield, IL  62704                                           │
+  │                                                                 │
+  │                                                                 │
+  │RE: Your order A-10233                                           │
+  │                                                                 │
+  │                                                                 │
+  │Dear Eleanor,                                                    │
+  │                                                                 │
+┃ │     Thank you for ordering the Smith-Corona Galaxie 12 on       │
+┃ │10/14/2026. We are pleased to tell you that the machine has been │
+┃ │inspected, cleaned, and adjusted in our shop, and that it left   │
+┃ │here today by parcel post.                                       │
+  │                                                                 │
+┃ │     Your invoice total is $89.50. Please note that the machine  │
+┃ │comes with a fabric ribbon; carbon film ribbons are not          │
+  │                                                    ‾‾‾          │
+┃ │compatible with this model.                                      │
+  │‾‾‾‾‾‾‾‾‾‾                                                       │
+  │                                                                 │
+┃ │     If you have any questions, please write to us at the address│
+┃ │above. We hope you enjoy many years of happy typing.             │
+  │                                                                 │
+  │                              Sincerely,                         │
+  │                                                                 │
+  │                                                                 │
+  │                                                                 │
+  │                                                                 │
+  │                              Margaret Hollis                    │
+  │                              Service Manager                    │
+  │                                                                 │
+  │                                                                 │
+  │     "A typewriter that is cleaned once a year will outlast its  │
+  │     owner." - our founder, 1952                                 │
+  │                                                                 │
+  │                                                                 │
+  │Order number:  A-10233                                           │
+  │Shipped:       November 8, 2026                                  │
+  └─────────────────────────────────────────────────────────────────┘
 
 Letter 2 of 5 · row 3 · Thomas O'Brien · page 1 of 1
-  ┌──────────────────────────────────────────────────────────────────┐
-  │                                        Hollis Typewriter Repair  │
-  │                                        19 Platen Lane            │
-  │                                        Ames, Iowa  12345         │
-  │                                                                  │
-  │                                                                  │
-  │Thomas O'Brien                                                    │
-  │88 Harbor Road                                                    │
-  │Gloucester, MA  01930                                             │
-  │                                                                  │
-  │                                                                  │
-  │RE: Your order A-10241                                            │
-  │                                                                  │
-  │                                                                  │
-  │Dear Thomas,                                                      │
-  │                                                                  │
-┃ │     Thank you for ordering the Olympia SM9 on 10/20/2026. We are │
-┃ │pleased to tell you that the machine has been inspected, cleaned, │
-┃ │and adjusted in our shop, and that it left here today by parcel   │
-┃ │post.                                                             │
-  │                                                                  │
-┃ │     Your invoice total is $125.00. Please note that the machine  │
-┃ │comes with a fabric ribbon; carbon film ribbons are not compatible│
-  │                                                    ‾‾‾‾‾‾‾‾‾‾‾‾‾‾│
-┃ │with this model.                                                  │
-  │                                                                  │
-┃ │     If you have any questions, please write to us at the address │
-┃ │above. We hope you enjoy many years of happy typing.              │
-  │                                                                  │
-  │                              Sincerely,                          │
-  │                                                                  │
-  │                                                                  │
-  │                                                                  │
-  │                                                                  │
-  │                              Margaret Hollis                     │
-  │                              Service Manager                     │
-  │                                                                  │
-  │                                                                  │
-  │     "A typewriter that is cleaned once a year will outlast its   │
-  │     owner." - our founder, 1952                                  │
-  │                                                                  │
-  │                                                                  │
-  │Order number:  A-10241                                            │
-  │Shipped:       November 8, 2026                                   │
-  └──────────────────────────────────────────────────────────────────┘
+  ┌─────────────────────────────────────────────────────────────────┐
+  │                                        Hollis Typewriter Repair │
+  │                                        19 Platen Lane           │
+  │                                        Ames, Iowa  12345        │
+  │                                                                 │
+  │                                                                 │
+  │Thomas O'Brien                                                   │
+  │88 Harbor Road                                                   │
+  │Gloucester, MA  01930                                            │
+  │                                                                 │
+  │                                                                 │
+  │RE: Your order A-10241                                           │
+  │                                                                 │
+  │                                                                 │
+  │Dear Thomas,                                                     │
+  │                                                                 │
+┃ │     Thank you for ordering the Olympia SM9 on 10/20/2026. We are│
+┃ │pleased to tell you that the machine has been inspected, cleaned,│
+┃ │and adjusted in our shop, and that it left here today by parcel  │
+┃ │post.                                                            │
+  │                                                                 │
+┃ │     Your invoice total is $125.00. Please note that the machine │
+┃ │comes with a fabric ribbon; carbon film ribbons are not          │
+  │                                                    ‾‾‾          │
+┃ │compatible with this model.                                      │
+  │‾‾‾‾‾‾‾‾‾‾                                                       │
+  │                                                                 │
+┃ │     If you have any questions, please write to us at the address│
+┃ │above. We hope you enjoy many years of happy typing.             │
+  │                                                                 │
+  │                              Sincerely,                         │
+  │                                                                 │
+  │                                                                 │
+  │                                                                 │
+  │                                                                 │
+  │                              Margaret Hollis                    │
+  │                              Service Manager                    │
+  │                                                                 │
+  │                                                                 │
+  │     "A typewriter that is cleaned once a year will outlast its  │
+  │     owner." - our founder, 1952                                 │
+  │                                                                 │
+  │                                                                 │
+  │Order number:  A-10241                                           │
+  │Shipped:       November 8, 2026                                  │
+  └─────────────────────────────────────────────────────────────────┘
 
 Letter 3 of 5 · row 4 · José Álvarez · page 1 of 1
-  ┌──────────────────────────────────────────────────────────────────┐
-  │                                        Hollis Typewriter Repair  │
-  │                                        19 Platen Lane            │
-  │                                        Ames, Iowa  12345         │
-  │                                                                  │
-  │                                                                  │
-  │Jose Alvarez                                                      │
-  │Alvarez Translation Services                                      │
-  │310 Cedar Street                                                  │
-  │Apt 4B                                                            │
-  │Santa Fe, NM  87501                                               │
-  │                                                                  │
-  │                                                                  │
-  │RE: Your order A-10252                                            │
-  │                                                                  │
-  │                                                                  │
-  │Dear Jose,                                                        │
-  │                                                                  │
-┃ │     Thank you for ordering the Hermes 3000 on 10/27/2026. We are │
-┃ │pleased to tell you that the machine has been inspected, cleaned, │
-┃ │and adjusted in our shop, and that it left here today by parcel   │
-┃ │post.                                                             │
-  │                                                                  │
-┃ │     Your invoice total is $148.75. Please note that the machine  │
-┃ │comes with a fabric ribbon; carbon film ribbons are not compatible│
-  │                                                    ‾‾‾‾‾‾‾‾‾‾‾‾‾‾│
-┃ │with this model.                                                  │
-  │                                                                  │
-┃ │     If you have any questions, please write to us at the address │
-┃ │above. We hope you enjoy many years of happy typing.              │
-  │                                                                  │
-  │                              Sincerely,                          │
-  │                                                                  │
-  │                                                                  │
-  │                                                                  │
-  │                                                                  │
-  │                              Margaret Hollis                     │
-  │                              Service Manager                     │
-  │                                                                  │
-  │                                                                  │
-  │     "A typewriter that is cleaned once a year will outlast its   │
-  │     owner." - our founder, 1952                                  │
-  │                                                                  │
-  │                                                                  │
-  │Order number:  A-10252                                            │
-  │Shipped:       November 8, 2026                                   │
-  └──────────────────────────────────────────────────────────────────┘
+  ┌─────────────────────────────────────────────────────────────────┐
+  │                                        Hollis Typewriter Repair │
+  │                                        19 Platen Lane           │
+  │                                        Ames, Iowa  12345        │
+  │                                                                 │
+  │                                                                 │
+  │Jose Alvarez                                                     │
+  │Alvarez Translation Services                                     │
+  │310 Cedar Street                                                 │
+  │Apt 4B                                                           │
+  │Santa Fe, NM  87501                                              │
+  │                                                                 │
+  │                                                                 │
+  │RE: Your order A-10252                                           │
+  │                                                                 │
+  │                                                                 │
+  │Dear Jose,                                                       │
+  │                                                                 │
+┃ │     Thank you for ordering the Hermes 3000 on 10/27/2026. We are│
+┃ │pleased to tell you that the machine has been inspected, cleaned,│
+┃ │and adjusted in our shop, and that it left here today by parcel  │
+┃ │post.                                                            │
+  │                                                                 │
+┃ │     Your invoice total is $148.75. Please note that the machine │
+┃ │comes with a fabric ribbon; carbon film ribbons are not          │
+  │                                                    ‾‾‾          │
+┃ │compatible with this model.                                      │
+  │‾‾‾‾‾‾‾‾‾‾                                                       │
+  │                                                                 │
+┃ │     If you have any questions, please write to us at the address│
+┃ │above. We hope you enjoy many years of happy typing.             │
+  │                                                                 │
+  │                              Sincerely,                         │
+  │                                                                 │
+  │                                                                 │
+  │                                                                 │
+  │                                                                 │
+  │                              Margaret Hollis                    │
+  │                              Service Manager                    │
+  │                                                                 │
+  │                                                                 │
+  │     "A typewriter that is cleaned once a year will outlast its  │
+  │     owner." - our founder, 1952                                 │
+  │                                                                 │
+  │                                                                 │
+  │Order number:  A-10252                                           │
+  │Shipped:       November 8, 2026                                  │
+  └─────────────────────────────────────────────────────────────────┘
 
 Letter 4 of 5 · row 5 · Priya Raman · page 1 of 1
-  ┌──────────────────────────────────────────────────────────────────┐
-  │                                        Hollis Typewriter Repair  │
-  │                                        19 Platen Lane            │
-  │                                        Ames, Iowa  12345         │
-  │                                                                  │
-  │                                                                  │
-  │Priya Raman                                                       │
-  │Raman Consulting LLC                                              │
-  │5 Elm Court                                                       │
-  │Ann Arbor, MI  48104                                              │
-  │                                                                  │
-  │                                                                  │
-  │RE: Your order A-10259                                            │
-  │                                                                  │
-  │                                                                  │
-  │Dear Priya,                                                       │
-  │                                                                  │
-┃ │     Thank you for ordering the IBM Selectric II on 11/2/2026. We │
-┃ │are pleased to tell you that the machine has been inspected,      │
-┃ │cleaned, and adjusted in our shop, and that it left here today by │
-┃ │parcel post.                                                      │
-  │                                                                  │
-┃ │     Your invoice total is $210.00. Please note that the machine  │
-┃ │comes with a fabric ribbon; carbon film ribbons are not compatible│
-  │                                                    ‾‾‾‾‾‾‾‾‾‾‾‾‾‾│
-┃ │with this model.                                                  │
-  │                                                                  │
-┃ │     If you have any questions, please write to us at the address │
-┃ │above. We hope you enjoy many years of happy typing.              │
-  │                                                                  │
-  │                              Sincerely,                          │
-  │                                                                  │
-  │                                                                  │
-  │                                                                  │
-  │                                                                  │
-  │                              Margaret Hollis                     │
-  │                              Service Manager                     │
-  │                                                                  │
-  │                                                                  │
-  │     "A typewriter that is cleaned once a year will outlast its   │
-  │     owner." - our founder, 1952                                  │
-  │                                                                  │
-  │                                                                  │
-  │Order number:  A-10259                                            │
-  │Shipped:       November 8, 2026                                   │
-  └──────────────────────────────────────────────────────────────────┘
+  ┌─────────────────────────────────────────────────────────────────┐
+  │                                        Hollis Typewriter Repair │
+  │                                        19 Platen Lane           │
+  │                                        Ames, Iowa  12345        │
+  │                                                                 │
+  │                                                                 │
+  │Priya Raman                                                      │
+  │Raman Consulting LLC                                             │
+  │5 Elm Court                                                      │
+  │Ann Arbor, MI  48104                                             │
+  │                                                                 │
+  │                                                                 │
+  │RE: Your order A-10259                                           │
+  │                                                                 │
+  │                                                                 │
+  │Dear Priya,                                                      │
+  │                                                                 │
+┃ │     Thank you for ordering the IBM Selectric II on 11/2/2026. We│
+┃ │are pleased to tell you that the machine has been inspected,     │
+┃ │cleaned, and adjusted in our shop, and that it left here today by│
+┃ │parcel post.                                                     │
+  │                                                                 │
+┃ │     Your invoice total is $210.00. Please note that the machine │
+┃ │comes with a fabric ribbon; carbon film ribbons are not          │
+  │                                                    ‾‾‾          │
+┃ │compatible with this model.                                      │
+  │‾‾‾‾‾‾‾‾‾‾                                                       │
+  │                                                                 │
+┃ │     If you have any questions, please write to us at the address│
+┃ │above. We hope you enjoy many years of happy typing.             │
+  │                                                                 │
+  │                              Sincerely,                         │
+  │                                                                 │
+  │                                                                 │
+  │                                                                 │
+  │                                                                 │
+  │                              Margaret Hollis                    │
+  │                              Service Manager                    │
+  │                                                                 │
+  │                                                                 │
+  │     "A typewriter that is cleaned once a year will outlast its  │
+  │     owner." - our founder, 1952                                 │
+  │                                                                 │
+  │                                                                 │
+  │Order number:  A-10259                                           │
+  │Shipped:       November 8, 2026                                  │
+  └─────────────────────────────────────────────────────────────────┘
 
 Letter 5 of 5 · row 6 · Walter Kowalczyk · page 1 of 1
-  ┌──────────────────────────────────────────────────────────────────┐
-  │                                        Hollis Typewriter Repair  │
-  │                                        19 Platen Lane            │
-  │                                        Ames, Iowa  12345         │
-  │                                                                  │
-  │                                                                  │
-  │Walter Kowalczyk                                                  │
-  │The Kowalczyk Family Trust for Historic Office Machines           │
-  │742 Evergreen Terrace                                             │
-  │Portland, OR  97201                                               │
-  │                                                                  │
-  │                                                                  │
-  │RE: Your order A-10260                                            │
-  │                                                                  │
-  │                                                                  │
-  │Dear Walter,                                                      │
-  │                                                                  │
-┃ │     Thank you for ordering the Brother Correctronic 50 on        │
-┃ │11/3/2026. We are pleased to tell you that the machine has been   │
-┃ │inspected, cleaned, and adjusted in our shop, and that it left    │
-┃ │here today by parcel post.                                        │
-  │                                                                  │
-┃ │     Your invoice total is $64.25. Please note that the machine   │
-┃ │comes with a fabric ribbon; carbon film ribbons are not compatible│
-  │                                                    ‾‾‾‾‾‾‾‾‾‾‾‾‾‾│
-┃ │with this model.                                                  │
-  │                                                                  │
-┃ │     If you have any questions, please write to us at the address │
-┃ │above. We hope you enjoy many years of happy typing.              │
-  │                                                                  │
-  │                              Sincerely,                          │
-  │                                                                  │
-  │                                                                  │
-  │                                                                  │
-  │                                                                  │
-  │                              Margaret Hollis                     │
-  │                              Service Manager                     │
-  │                                                                  │
-  │                                                                  │
-  │     "A typewriter that is cleaned once a year will outlast its   │
-  │     owner." - our founder, 1952                                  │
-  │                                                                  │
-  │                                                                  │
-  │Order number:  A-10260                                            │
-  │Shipped:       November 8, 2026                                   │
-  └──────────────────────────────────────────────────────────────────┘
+  ┌─────────────────────────────────────────────────────────────────┐
+  │                                        Hollis Typewriter Repair │
+  │                                        19 Platen Lane           │
+  │                                        Ames, Iowa  12345        │
+  │                                                                 │
+  │                                                                 │
+  │Walter Kowalczyk                                                 │
+  │The Kowalczyk Family Trust for Historic Office Machines          │
+  │742 Evergreen Terrace                                            │
+  │Portland, OR  97201                                              │
+  │                                                                 │
+  │                                                                 │
+  │RE: Your order A-10260                                           │
+  │                                                                 │
+  │                                                                 │
+  │Dear Walter,                                                     │
+  │                                                                 │
+┃ │     Thank you for ordering the Brother Correctronic 50 on       │
+┃ │11/3/2026. We are pleased to tell you that the machine has been  │
+┃ │inspected, cleaned, and adjusted in our shop, and that it left   │
+┃ │here today by parcel post.                                       │
+  │                                                                 │
+┃ │     Your invoice total is $64.25. Please note that the machine  │
+┃ │comes with a fabric ribbon; carbon film ribbons are not          │
+  │                                                    ‾‾‾          │
+┃ │compatible with this model.                                      │
+  │‾‾‾‾‾‾‾‾‾‾                                                       │
+  │                                                                 │
+┃ │     If you have any questions, please write to us at the address│
+┃ │above. We hope you enjoy many years of happy typing.             │
+  │                                                                 │
+  │                              Sincerely,                         │
+  │                                                                 │
+  │                                                                 │
+  │                                                                 │
+  │                                                                 │
+  │                              Margaret Hollis                    │
+  │                              Service Manager                    │
+  │                                                                 │
+  │                                                                 │
+  │     "A typewriter that is cleaned once a year will outlast its  │
+  │     owner." - our founder, 1952                                 │
+  │                                                                 │
+  │                                                                 │
+  │Order number:  A-10260                                           │
+  │Shipped:       November 8, 2026                                  │
+  └─────────────────────────────────────────────────────────────────┘

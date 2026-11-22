@@ -106,12 +106,10 @@ def example(out: Path) -> str:
                    for r in m.dataset.records[:EXAMPLE_ROWS])
 
     letter = m.letters[0]
-    lay = m.settings.layout
-    sheet = emulate([letter], m.profile, PrintOptions.for_profile(
-        m.profile, stock=lay.stock, top_lines=lay.top_lines)).sheets[0]
+    sheet = emulate([letter], m.profile, PrintOptions.for_profile(m.profile, m.frame)).sheets[0]
     name = salutation.text.split()[0]
     (out / "example-letter.svg").write_text(sheet_svg(
-        sheet, lay.stock, top_in=0.5, bottom_in=_typed_bottom_in(sheet, name), left_in=0.6, right_in=7.9,
+        sheet, m.frame.stock, top_in=0.5, bottom_in=_typed_bottom_in(sheet, name), left_in=0.6, right_in=7.9,
         title=f"The top of the letter to {letter.record.values['FirstName']}, as daisywriter types it"),
         encoding="utf-8")
     return f"""<div class="steps">
