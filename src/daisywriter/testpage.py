@@ -9,6 +9,8 @@ drive might shift them enough to thicken the strokes. "charset" types every char
 """
 from __future__ import annotations
 
+import textwrap
+
 from .layout import Cell, Line, Page
 from .profile import Profile
 from .render import CR, encode, reverse_pass
@@ -87,11 +89,14 @@ def charset_page(profile: Profile) -> Page:
                 and chr(c) not in profile.charset]
     mapped = list(profile.charset)
     w = profile.line_width
-    lines = [Line(_text(f"Character set of the {profile.name}:")), Line()]
+    # the profile name can be long: wrap the title, or the firmware wraps it mid-word
+    title = textwrap.wrap(f"Character set of the {profile.name}:", w)
+    lines = [Line(_text(t)) for t in title] + [Line()]
     for i in range(0, len(ascii_ok), w // 2):
         lines.append(Line(_text(" ".join(ascii_ok[i:i + w // 2]))))
     if mapped:
-        lines += [Line(), Line(_text("Mapped specials: " + " ".join(mapped)))]
+        specials = textwrap.wrap("Mapped specials: " + " ".join(mapped), w)
+        lines += [Line()] + [Line(_text(t)) for t in specials]
     return Page(1, lines)
 
 

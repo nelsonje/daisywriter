@@ -190,3 +190,23 @@ def test_pdf(tmp_path):
     data = path.read_bytes()
     assert data.startswith(b"%PDF-1.4") and data.rstrip().endswith(b"%%EOF")
     assert b"/Count 1" in data and b"(\\()" in data and b"(H)" in data
+
+
+@pytest.mark.parametrize("profile", [SWINTEC, OLYMPIA], ids=lambda p: p.id)
+@pytest.mark.parametrize("name", ["format", "bold", "charset"])
+def test_test_pages_fit_and_name_every_character(profile, name):
+    """Only the margin probe may reach the firmware's wrap, and every byte a test
+    page sends is a character the profile describes."""
+    from daisywriter.testpage import PAGES
+    e = Emulator(profile)
+    e.load_sheet()
+    for line in PAGES[name](profile).lines:
+        e.write(render_line(line, profile))
+    problems = [ev for ev in e.events if "wrapped" in ev or "doesn't describe" in ev]
+    assert problems == []
+
+
+def test_question_mark_is_an_ordinary_character():
+    e = typed(b"Why?\n", OLYMPIA)
+    assert not [ev for ev in e.events if "doesn't describe" in ev]
+    assert "?" in [ch for chars in row(e).values() for ch in chars]

@@ -184,12 +184,13 @@ class Emulator:
 
     def _glyph(self, b: int) -> str:
         ch = self._glyphs.get((self.shift, b))
-        if ch is None:
-            ch = "?" if self.shift or chr(b) in self.profile.unavailable else chr(b)
-            if ch == "?":
-                self._event(f"byte {b:#04x}{' under SO' if self.shift else ''} types a character "
-                            "the profile doesn't describe")
-        return ch
+        if ch is not None:
+            return ch
+        if not self.shift and chr(b) not in self.profile.unavailable:
+            return chr(b)
+        self._event(f"byte {b:#04x}{' under SO' if self.shift else ''} types a character "
+                    "the profile doesn't describe")
+        return "?"
 
     def _strike(self, col: int, ch: str):
         sheet = self.sheet
