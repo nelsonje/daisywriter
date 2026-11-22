@@ -29,7 +29,11 @@ right_guard = 0
 
 # Phase 2 (output), recorded here so profiles stay complete.
 newline = "\n"                # LF also returns to the left margin on this firmware
+# Measured 2026-11-22 with `testpage bold`: a re-strike typed right to left is
+# clearly bolder than strikes from the left and still one clean mark; more
+# strikes add little. The same as on both Swintecs.
 bold = "overstrike"
+bold_restrikes = ["right"]
 underline = "overprint"
 strikethrough = "-"            # overtyped on struck-out text
 line_pause_s = 0.0

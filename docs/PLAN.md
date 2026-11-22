@@ -337,14 +337,15 @@ Two Swintecs so far: the first, a 1146 CMP with firmware 335-U (2026-11-08 to 11
 - [x] Olympia: `testpage margins`. 2026-11-22: 65 characters fit and the 66th wrapped (the Swintec fits 66). Both firmwares wrap a character that lands on the right margin; the Swintec's power-on margins (30 and 129 at 15 cpi, 20–86 on the scale at 10 cpi) are one column wider than the Olympia's (10 and 75). The Olympia profiles now give the last column typed without a wrap (`margins.right = 74`, `right_guard = 0`), so the emulator wraps where the paper did; daisywriter's line was already 65 columns.
 - [x] Olympia with the Swintec wheel: `testpage charset --profile olympia-electronic-compact-2-swintec-wheel`. 2026-11-22: < and > typed under SO, as predicted.
 - [x] Paper guide: the Olympia's carrier starts at 10 on the scale and the Swintec's at 20 (the power-on margins above), so the same 1-inch left margin needs the sheet's left edge at 0 on an Olympia and 10 on a Swintec. 2026-11-22: the Olympia's margins came out as expected with the guide at 0. The user guide now says so.
-- [ ] Olympia: `testpage bold` (strikes from the left or the right) and one sample letter.
+- [x] Olympia: `testpage bold`. 2026-11-22: one re-strike from the right is clearly bolder than 2 or 3 from the left and still one clean mark; left+right and right+right add little. `bold_restrikes = ["right"]` in both Olympia profiles.
+- [ ] Olympia: one sample letter.
 - [ ] Mac app: print from the installed app (its own libusb, not Homebrew's).
   An unsigned app won't open at all on a Mac managed to allow only App Store and identified developers (2026-11-11, Jacob's work laptop): Open Anyway doesn't help. Signing and notarizing fixes that.
 - [ ] Windows: what an adapter stall looks like (PE high, as when the cable is loose on macOS), and whether `soft_reset()` recovers it without disturbing the typewriter.
 
 ### Bold on carbon film
 Carbon film is fully black after the first strike, so re-striking in the same spot adds little. Bold needs wider strokes, which Diablo/Qume printers got by striking again 1/120 in to the side. Options considered for the Nakajima machines:
-- **Re-strike from the right** (`testpage bold`, `render.reverse_pass`): type the bold text right to left with BS so the carrier reaches each letter from the right. Play in the carrier drive makes each letter land a little to the side. **Works on the Swintec** (2026-11-10): clearly bolder, still clean. Profiles choose the direction of each re-strike with `bold_restrikes`.
+- **Re-strike from the right** (`testpage bold`, `render.reverse_pass`): type the bold text right to left with BS so the carrier reaches each letter from the right. Play in the carrier drive makes each letter land a little to the side. **Works on the Swintec** (2026-11-10, and the 1146 CM 2026-11-18) **and the Olympia** (2026-11-22): clearly bolder, still clean. Profiles choose the direction of each re-strike with `bold_restrikes`.
 - **Sub-column offsets by switching pitch:** ruled out. The carrier moves in 1/60-in steps (6/5/4 per character at 10/12/15 cpi), and a pitch change rounds the carrier column (`0DA6`), but `06C4` then moves the carrier by the remainder, so it always lands back on the new grid.
 - **Platen offset (ESC D / ESC U backlash):** about 1/50 in, varies between units, and doesn’t return reliably to the line (see `FIRMWARE_NOTES.md` in the Olympia repo). Ruled out.
 - **Harder strikes:** hammer force is a ROM table plus the impression switch, which only changes by hand and affects every character. Ruled out.
