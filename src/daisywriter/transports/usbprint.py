@@ -5,7 +5,8 @@ driver needs installing and libusb can't claim them. daisywriter talks to the
 driver directly, not through a print queue:
 - SetupAPI lists the device interfaces of GUID_DEVINTERFACE_USBPRINT. Each
   device path names the USB vendor and product ("\\\\?\\usb#vid_067b&pid_2305#...").
-- CreateFileW opens the one that matches the profile's vid/pid, overlapped.
+- CreateFileW opens the first known adapter found (base.ADAPTERS, or the
+  profile's vid/pid), overlapped.
 - WriteFile sends a line; a write the typewriter doesn't take within the
   timeout is cancelled with CancelIoEx, so a stuck typewriter can't hang the job.
 - IOCTL_USBPRINT_GET_LPT_STATUS reads the same port status byte as the USB
@@ -22,7 +23,16 @@ import re
 import sys
 import uuid
 
-from .base import UNPLUGGED, DeviceNotFound, PortStatus, TransportError, WriteTimeout
+from .base import (
+    ADAPTERS,
+    UNPLUGGED,
+    Adapter,
+    DeviceNotFound,
+    PortStatus,
+    TransportError,
+    WriteTimeout,
+    not_found,
+)
 
 GUID_DEVINTERFACE_USBPRINT = uuid.UUID("28d78fad-5a12-11d1-ae5b-0000f803a8c2")
 IOCTL_USBPRINT_GET_LPT_STATUS = 0x220030
@@ -46,8 +56,14 @@ def vid_pid(device_path: str) -> tuple[int, int] | None:
     return (int(m.group(1), 16), int(m.group(2), 16)) if m else None
 
 
-def pick_device(paths: list[str], vid: int, pid: int) -> str | None:
-    return next((p for p in paths if vid_pid(p) == (vid, pid)), None)
+def pick_device(paths: list[str], adapters: tuple[Adapter, ...] = ADAPTERS
+                ) -> tuple[str, Adapter] | None:
+    """The first path of the first adapter in the list that's present."""
+    for a in adapters:
+        path = next((p for p in paths if vid_pid(p) == (a.vid, a.pid)), None)
+        if path is not None:
+            return path, a
+    return None
 
 
 if sys.platform == "win32":
@@ -156,15 +172,17 @@ def usbprint_paths() -> list[str]:
 
 
 class UsbPrintTransport:
-    def __init__(self, vid: int = 0x067B, pid: int = 0x2305, path: str | None = None):
+    def __init__(self, adapters: tuple[Adapter, ...] = ADAPTERS, path: str | None = None):
         if sys.platform != "win32":
             raise TransportError("the usbprint transport only works on Windows")
+        self.name = path
         if path is None:
-            path = pick_device(usbprint_paths(), vid, pid)
-            if path is None:
-                raise DeviceNotFound(f"USB parallel adapter {vid:04x}:{pid:04x} not found; is it plugged "
-                                     "in? (Device Manager should list it as USB Printing Support)")
-        self.name = f"USB {vid:04x}:{pid:04x}"
+            found = pick_device(usbprint_paths(), adapters)
+            if found is None:
+                raise DeviceNotFound(f"{not_found(adapters)} (Device Manager should list it as USB "
+                                     "Printing Support)")
+            path, adapter = found
+            self.name = str(adapter)
         self.path = path
         h = _CreateFile(path, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, None,
                         OPEN_EXISTING, FILE_FLAG_OVERLAPPED, None)

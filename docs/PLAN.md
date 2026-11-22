@@ -11,7 +11,7 @@ daisywriter is a Windows desktop app (it also runs on macOS for development) tha
 5. Optionally, it adds **simulated typing errors with strikeover corrections**, only in the letter body. The body is auto-detected, or set with explicit `{{body}} … {{/body}}` markers.
 6. Paragraphs are **re-wrapped** to the typewriter's margins and pitch. Word's own line breaks are ignored, and only paragraph breaks and explicit manual line breaks are kept.
 
-The typewriter connects through a USB printer-class parallel adapter (e.g. a PL2305, 067b:2305), which the app drives **directly, not through Windows print queues**. That's the same approach as `../olympia-compact-electronic-2/cmpprint.py`.
+The typewriter connects through a USB printer-class parallel adapter (the Prolific PL2305, 067b:2305, or Sabrent's, 1a86:7584), which the app drives **directly, not through Windows print queues**. That's the same approach as `../olympia-compact-electronic-2/cmpprint.py`.
 
 ## 2. Decisions made so far
 | Topic | Decision |
@@ -180,7 +180,7 @@ A profile TOML describes one machine, for example:
 ```toml
 name = "Swintec 1146 CMP"
 transport = "usb_printer"   # or "serial" (future: Brother EP-44)
-usb = { vid = 0x067B, pid = 0x2305 }
+# usb = { vid = 0x067B, pid = 0x2305 } only to pick one adapter: otherwise any known one
 paper = "single_sheet"      # or "continuous"
 pitch_cpi = 10            # plus pitch_escape = "\x1bP" if host-settable
 lines_per_inch = 6
@@ -209,8 +209,9 @@ line_pause_s = 0.0
 - **Print queue in the GUI:** "Print all from #N", "Print selected", "Reprint". Each letter's status is saved in the session file (not printed, printing, printed, failed), so a crash or paper jam can resume.
 - Cancel: stop sending, then CAN to discard the machine's unprinted buffer.
 - Transports:
-  - **Windows** (`transports/usbprint.py`, ctypes, no dependencies): SetupAPI lists the interfaces of `GUID_DEVINTERFACE_USBPRINT`, and the device path's `vid_xxxx&pid_xxxx` picks the profile's adapter. `CreateFileW` opens it overlapped; each line is an overlapped `WriteFile`, cancelled with `CancelIoEx` when the timeout passes; `IOCTL_USBPRINT_GET_LPT_STATUS` (0x220030) reads the same status byte as GET_PORT_STATUS. `IOCTL_USBPRINT_SOFT_RESET` (0x220040) is available (`soft_reset()`) but not used until we know what it does to the typewriter.
-  - **macOS/Linux:** pyusb, lifted from `cmpprint.py`.
+  - **Windows** (`transports/usbprint.py`, ctypes, no dependencies): SetupAPI lists the interfaces of `GUID_DEVINTERFACE_USBPRINT`, and the device path's `vid_xxxx&pid_xxxx` picks the first known adapter that's present (`transports/base.ADAPTERS`, or the profile's `usb`). `CreateFileW` opens it overlapped; each line is an overlapped `WriteFile`, cancelled with `CancelIoEx` when the timeout passes; `IOCTL_USBPRINT_GET_LPT_STATUS` (0x220030) reads the same status byte as GET_PORT_STATUS. `IOCTL_USBPRINT_SOFT_RESET` (0x220040) is available (`soft_reset()`) but not used until we know what it does to the typewriter.
+  - **macOS/Linux:** pyusb, lifted from `cmpprint.py`. The bulk OUT endpoint comes from the descriptors (0x01 on the Prolific, 0x02 on the Sabrent).
+  - **Adapters** (`transports/base.ADAPTERS`): the cable doesn't depend on the typewriter, so profiles don't name it; daisywriter opens the first known adapter that's plugged in. Known: Prolific PL2305 (067b:2305) and Sabrent's (1a86:7584, "USB Print", QinHeng/WCH, USB 1.1, printer class 7/1/2, bulk OUT 0x02 and IN 0x82, 32-byte packets, an empty IEEE 1284 device ID). A profile's `usb = { vid, pid }` still picks one.
   - **Dry run:** writes the bytes to a file.
   - **Emulator** (`transports/emulator.py`, `--emulate out.pdf`): a model of the Nakajima firmware (line buffer, CR/LF/BS/SO/SI/CAN/ESC, auto-wrap at the right margin, sheet loading and ejecting) that types onto virtual sheets and draws them as a true-size PDF (`pdf.py`, no dependencies). It reports firmware wraps, typing off the sheet, sheets still in the rollers, text left in the buffer, and cases the firmware notes leave open (spaces just before BS/ESC/SO/SI). It shows what we *think* the machine does; ink and darkness still need paper.
 

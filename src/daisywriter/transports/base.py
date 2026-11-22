@@ -40,6 +40,39 @@ class PortStatus:
 UNPLUGGED = "the adapter stopped responding: is the USB cable unplugged?"
 
 
+@dataclass(frozen=True)
+class Adapter:
+    """A USB-to-parallel cable that works as a USB printer-class device."""
+    vid: int
+    pid: int
+    name: str
+
+    def __str__(self) -> str:
+        return f"{self.name} ({self.vid:04x}:{self.pid:04x})"
+
+
+# The cables daisywriter looks for, in this order. Any of them works with any
+# typewriter; a profile's usb = { vid, pid } picks one instead.
+ADAPTERS = (
+    Adapter(0x067B, 0x2305, "Prolific PL2305 adapter"),
+    Adapter(0x1A86, 0x7584, "Sabrent adapter (WCH CH340S)"),
+)
+
+
+def adapters_for(usb: dict | None) -> tuple[Adapter, ...]:
+    """The adapters to look for: the profile's, if it names one, else every known one."""
+    if not usb:
+        return ADAPTERS
+    vid, pid = int(usb["vid"]), int(usb["pid"])
+    known = next((a for a in ADAPTERS if (a.vid, a.pid) == (vid, pid)), None)
+    return (known or Adapter(vid, pid, "USB parallel adapter"),)
+
+
+def not_found(adapters: tuple[Adapter, ...]) -> str:
+    listed = " or ".join(f"{a.vid:04x}:{a.pid:04x}" for a in adapters)
+    return f"no USB parallel adapter found ({listed}); is it plugged in?"
+
+
 class TransportError(Exception):
     """A problem talking to the typewriter, with a message for the user."""
 

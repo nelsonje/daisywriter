@@ -172,7 +172,7 @@ spreadsheet are never misspelled.
 
 | What you see | What to do |
 |---|---|
-| *adapter … not found* | Check that the USB cable is plugged in at both ends. |
+| *no USB parallel adapter found* | Check that the USB cable is plugged in at both ends. |
 | *the adapter stopped responding* | The USB cable came out while typing. Plug it back in, then print that letter again. |
 | *the typewriter is off-line* | Press **ON LINE** so its light comes on. |
 | *PE (paper empty) is high* | The parallel cable is loose: push it in at the typewriter. |

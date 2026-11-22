@@ -8,7 +8,6 @@
 # are predicted from the notes and not yet seen on paper.
 name = "Olympia Electronic Compact 2 (Swintec wheel)"
 transport = "usb_printer"
-usb = { vid = 0x067B, pid = 0x2305 }
 paper = "single_sheet"        # or "continuous"
 # Loading a sheet: insert it until the rollers above the printing point catch it.
 # The printing point is then this many lines below the top edge (first line

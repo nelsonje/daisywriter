@@ -13,9 +13,9 @@ and keep it current.
   (`docMetadata/LabelInfo.xml`, with the organisation's ID). Strip it, with its entries in
   `_rels/.rels` and `[Content_Types].xml`, before committing. Prefer generated files
   (`daisywriter make-samples`).
-- **The typewriter is driven directly** through the USB-parallel adapter (PL2305, 067b:2305):
-  usbprint.sys via ctypes on Windows, pyusb/libusb elsewhere. Never through a printer, print
-  queue or spooler.
+- **The typewriter is driven directly** through a USB-parallel adapter (`transports/base.ADAPTERS`:
+  the Prolific PL2305, 067b:2305, or Sabrent's, 1a86:7584): usbprint.sys via ctypes on Windows,
+  pyusb/libusb elsewhere. Never through a printer, print queue or spooler.
 - **No force-pushes or history rewrites** without explicit approval. Work on a branch; `main`
   is what releases are tagged from.
 
