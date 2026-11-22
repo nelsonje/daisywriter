@@ -17,6 +17,10 @@ load_offset_lines = 4
 # sheet clears those rollers. On this machine the sheet can slip on the platen
 # once it's past the printing point (2026-11-18); a hand on the rollers helps.
 eject_extra_lines = 5
+# The sheet's left edge goes against the paper guide, set at this mark on the
+# paper scale, for a 1-inch left margin (the carrier starts at 20 on the scale). The prompts
+# mention the mark because the guide is broken on some machines (2026-11-22).
+paper_guide = 10
 
 pitch_cpi = 10
 lines_per_inch = 6

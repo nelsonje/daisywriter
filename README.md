@@ -69,8 +69,8 @@ uv run daisywriter print ... --dry-run out.bin     # write the bytes to a file i
 uv run daisywriter print ... --emulate out.pdf     # type on an emulated typewriter; draw the sheets
 uv run daisywriter print ... --typing-errors 2      # about 2 corrected typing errors per 100 words
 ```
-Before each page, insert a sheet against the paper guide (or at 10 on the scale, where the guide
-is broken) until the rollers above the printing point catch it, with the typewriter ON LINE.
+Before each page, insert a sheet against the paper guide (set at 10 on the scale on a Swintec,
+0 on an Olympia; line the sheet up with that mark where the guide is broken) until the rollers above the printing point catch it, with the typewriter ON LINE.
 daisywriter feeds to the top margin, types the page, then rolls the sheet out.
 
 The paper size and margins come from the template's page setup in Word (Layout > Size and

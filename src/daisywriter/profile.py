@@ -70,6 +70,11 @@ def paper_size(spec: str | Stock) -> Stock:
 _FRACTIONS = {8: "⅛¼⅜½⅝¾⅞", 6: "⅙⅓½⅔⅚"}  # eighths of an inch, and sixths (lines at 6 lpi)
 
 
+def guide_place(mark: int | None, relation: str = "of") -> str:
+    """"the paper guide (or of 10 on the scale)": the guide is broken on some machines."""
+    return "the paper guide" + (f" (or {relation} {mark} on the scale)" if mark is not None else "")
+
+
 def inches(x: float) -> str:
     """Inches for people: 6⅛, ¾, ⅔, 1, 8.27."""
     for n, signs in _FRACTIONS.items():
@@ -91,6 +96,7 @@ class Profile:
     paper: str = "single_sheet"
     load_offset_lines: int = 0  # printing point below the sheet's top edge once it's loaded
     eject_extra_lines: int = 0  # extra feed after the bottom edge reaches the printing point
+    paper_guide: int | None = None  # the mark on the paper scale for the sheet's left edge
     unavailable: frozenset[str] = frozenset()
     charset: dict[str, bytes] = field(default_factory=dict)
     raw: dict = field(default_factory=dict, compare=False)
@@ -162,6 +168,7 @@ def _from_toml(pid: str, data: dict) -> Profile:
         paper=data.get("paper", "single_sheet"),
         load_offset_lines=int(data.get("load_offset_lines", 0)),
         eject_extra_lines=int(data.get("eject_extra_lines", 0)),
+        paper_guide=data.get("paper_guide"),
         unavailable=frozenset(data.get("unavailable", "")),
         charset={k: v.encode("latin-1") for k, v in data.get("charset", {}).items()},
         raw=data,

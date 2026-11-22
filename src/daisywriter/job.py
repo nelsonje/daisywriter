@@ -20,7 +20,7 @@ from dataclasses import dataclass
 from .frame import Frame
 from .layout import Page
 from .merge import Letter
-from .profile import LETTER, Profile, Stock, inches
+from .profile import LETTER, Profile, Stock, guide_place, inches
 from .render import CAN, FF, newline, passes, render_line
 from .transports import Transport, TransportError
 
@@ -50,6 +50,7 @@ class PrintOptions:
     stock: Stock = LETTER
     top_lines: int = 6  # top margin: lines from the sheet's top edge to the first line
     shift_in: float = 0.0  # single sheets go this far right of the paper guide
+    paper_guide: int | None = None  # its mark on the paper scale, for the prompts
     eject: bool = True  # single sheets: feed to the end of the page afterwards
     line_pause_s: float = 0.0  # pause after each line (to lower the average power draw)
     timeout_s: float = 60.0  # per line
@@ -57,7 +58,8 @@ class PrintOptions:
     @classmethod
     def for_profile(cls, profile: Profile, frame: Frame | None = None, **kw) -> PrintOptions:
         """Options from the profile, the letters' paper and margins, then kw."""
-        base = cls(paper=profile.paper, line_pause_s=float(profile.raw.get("line_pause_s", 0.0)))
+        base = cls(paper=profile.paper, line_pause_s=float(profile.raw.get("line_pause_s", 0.0)),
+                   paper_guide=profile.paper_guide)
         if frame is not None:
             base.stock, base.top_lines, base.shift_in = frame.stock, frame.top_lines, frame.shift_in
         for k, v in kw.items():
@@ -68,12 +70,11 @@ class PrintOptions:
 
 def sheet_prompt(opts: PrintOptions, where: str) -> str:
     sheet = "a sheet" if opts.stock == LETTER else f"a sheet of {opts.stock.label} paper"
-    place = ""
     if opts.shift_in:
-        place = (f" Put its left edge {inches(opts.shift_in)} inch to the right of the paper guide "
-                 "(or of 10 on the scale).")
+        place = (f" Put its left edge {inches(opts.shift_in)} inch to the right of "
+                 f"{guide_place(opts.paper_guide)}.")
     else:
-        place = " Put its left edge against the paper guide (or at 10 on the scale)."
+        place = f" Put its left edge against {guide_place(opts.paper_guide, 'at')}."
     return (f"Insert {sheet} for {where} until the rollers above the printing point catch it."
             f"{place} Then continue?")
 

@@ -58,7 +58,18 @@ def test_narrower_left_margin_moves_the_sheet():
     opts = PrintOptions.for_profile(SWINTEC, frame)
     assert ("Put its left edge ¼ inch to the right of the paper guide (or of 10 on the scale)."
             in sheet_prompt(opts, "letter 1"))
-    assert "against the paper guide (or at 10 on the scale)" in sheet_prompt(PrintOptions(), "letter 1")
+    assert "against the paper guide (or at 10 on the scale)" in sheet_prompt(PrintOptions.for_profile(SWINTEC), "x")
+    assert "against the paper guide. Then" in sheet_prompt(PrintOptions(), "letter 1")  # no mark known
+
+
+def test_the_olympias_paper_guide_is_at_0():
+    olympia = load_profile("olympia-electronic-compact-2")
+    frame, issues = fit_page(page(left=0.75, right=1.25), olympia)
+    assert frame.shift_in == 0.25 and "right of the paper guide (or of 0 on the scale)" in issues[0].message
+    frame, _ = fit_page(page(), olympia)
+    assert frame.width == 65 and frame.columns == olympia.line_width  # 1 in margins: its whole line
+    opts = PrintOptions.for_profile(olympia, frame)
+    assert "against the paper guide (or at 0 on the scale)" in sheet_prompt(opts, "letter 1")
 
 
 def test_a_left_margin_within_half_a_column_needs_no_move():

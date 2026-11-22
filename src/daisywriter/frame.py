@@ -1,10 +1,11 @@
 """Where a letter goes on the sheet: Word's page setup fitted to the typewriter.
 
 The typewriter's margins are set on its keyboard, never from the computer, and
-every power-on resets them (columns 10 and 75 on the Nakajima machines). With
-the sheet against the paper guide, column c is c / pitch inches from its left
-edge (the guide is at 10 on the paper scale; on some machines it's broken, and
-the scale is what's left). daisywriter keeps the text inside those margins:
+every power-on resets them. With the sheet against the paper guide, column c is
+c / pitch inches from its left edge: the profile's margins count from there, and
+its paper_guide is the guide's mark on the paper scale (on some machines the
+guide is broken, and the scale is what's left). daisywriter keeps the text
+inside those margins:
 
 - A wider left margin in Word starts each line with spaces (Frame.indent).
 - A narrower one asks for the sheet to go that much right of the paper guide
@@ -21,7 +22,7 @@ from dataclasses import dataclass
 
 from . import issues as I
 from .model import PageSetup
-from .profile import LETTER, Profile, Stock, inches, paper_size, sized
+from .profile import LETTER, Profile, Stock, guide_place, inches, paper_size, sized
 
 MIN_WIDTH = 20  # characters per line
 MIN_LINES = 6  # typed lines per page
@@ -87,7 +88,7 @@ def fit_page(page: PageSetup | None, profile: Profile, paper: str | Stock | None
         issues.append(I.warning(
             f"the left margin in Word ({inches(page.left_in)} in) is narrower than the "
             f"typewriter's ({inches(guide)} in): put each sheet {inches(shift)} inch to the right "
-            "of the paper guide (or of 10 on the scale)", "page setup"))
+            f"of {guide_place(profile.paper_guide)}", "page setup"))
     left = _cols((page.left_in + shift) * cpi)
     end = math.floor((sheet.width_in - page.right_in + shift) * cpi + 1e-6)
     right = page.right_in

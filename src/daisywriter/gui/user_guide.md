@@ -53,7 +53,9 @@ folder in your Documents. (They're also on the download page, as
    daisywriter expects them. Don't change the margins.
 4. Set the **paper guide** (the stop the sheet's left edge rests against) at
    **0** on the scale on an Olympia, or at **10** on a Swintec. Either way, the
-   letters then start about 1 inch from the left edge of the paper.
+   letters then start about 1 inch from the left edge of the paper. On some
+   typewriters the guide is broken: then line each sheet's left edge up with
+   that mark instead.
 5. Press **ON LINE** so its light comes on.
 6. In daisywriter, choose your typewriter in the **Typewriter** list at the top.
    The model is on the label: a 1146 **CMP** and a 1146 **CM** type some special
@@ -101,8 +103,7 @@ Tables and pictures can't be typed: daisywriter will point them out.
 - The top margin is at least ⅔ inch: that's where the typewriter holds a sheet
   it has just pulled in.
 - For a left margin under 1 inch, daisywriter asks you to put each sheet a
-  little to the right of the paper guide (or of 10 on the scale), and says
-  how far.
+  little to the right of the paper guide, and says how far.
 
 If a margin can't be used as set, daisywriter says so in the box at the
 bottom and uses the nearest one it can. Writing the template in **Courier
@@ -135,7 +136,8 @@ New**, 12 pt, makes the page in Word look much like the typed one.
 5. Click **Print checked letters**.
 6. For each page, daisywriter asks for paper. Put a sheet in, against the
    paper guide on the left (if the guide is missing or broken, line the
-   sheet's left edge up with **10** on the scale), **just until the rollers
+   sheet's left edge up with **10** on the scale on a Swintec, **0** on an
+   Olympia), **just until the rollers
    above the typing point catch it**, then click **Continue**.
    daisywriter moves it down to the top margin, types the page, and feeds it
    out when it's done.
