@@ -8,8 +8,10 @@ guide is broken, and the scale is what's left). daisywriter keeps the text
 inside those margins:
 
 - A wider left margin in Word starts each line with spaces (Frame.indent).
-- A narrower one asks for the sheet to go that much right of the paper guide
-  (Frame.shift_in); the paper prompt says so.
+- A narrower one starts each line with backspaces, left of the typewriter's
+  margin, when the profile says the firmware allows it (left_of_margin; a
+  negative Frame.indent). Otherwise the sheet goes that much right of the
+  paper guide (Frame.shift_in), and the paper prompt says so.
 - Word's right margin ends the lines, but never past the typewriter's right
   margin, where the typewriter would wrap the line itself.
 - On single sheets the top margin is at least where the printing point is once
@@ -41,8 +43,9 @@ class Frame:
 
     @property
     def columns(self) -> int:
-        """Columns from the typewriter's left margin to the end of the text."""
-        return self.indent + self.width
+        """Columns from the start of the text, or the typewriter's left margin if
+        that's further left, to the end of the text."""
+        return max(self.indent, 0) + self.width
 
     def margins_in(self, profile: Profile) -> tuple[float, float, float, float]:
         """(left, right, top, bottom) in inches from the sheet's edges: Word's
@@ -84,6 +87,8 @@ def fit_page(page: PageSetup | None, profile: Profile, paper: str | Stock | None
     guide = profile.margin_left / cpi  # the typewriter's left margin, from a sheet against the guide
     shift = round(guide - page.left_in, 3)
     shift = shift if shift >= 0.5 / cpi else 0.0  # less than half a column rounds away
+    if profile.left_of_margin:
+        shift = 0.0  # backspaces reach the text instead
     if shift:
         issues.append(I.warning(
             f"the left margin in Word ({inches(page.left_in)} in) is narrower than the "

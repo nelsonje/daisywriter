@@ -1,4 +1,6 @@
 """Paper size and margins: Word's page setup fitted to the typewriter."""
+import dataclasses
+
 import docx
 import pytest
 from docx.shared import Inches
@@ -16,6 +18,7 @@ from daisywriter.testpage import left_page
 from daisywriter.transports.emulator import STEPS_PER_INCH, emulate
 
 SWINTEC = load_profile("swintec-1146cmp")
+NO_BACKSPACING = dataclasses.replace(SWINTEC, left_of_margin=False)  # a firmware that stops at the margin
 
 
 def page(width=8.5, length=11.0, left=1.0, right=1.0, top=1.0, bottom=1.0):
@@ -48,10 +51,18 @@ def test_wider_left_margin_indents():
     assert issues == []
 
 
-def test_narrower_left_margin_moves_the_sheet():
-    frame, issues = fit_page(page(left=0.75, right=1.25), SWINTEC)
+def test_narrower_left_margin_starts_lines_with_backspaces():
+    frame, issues = fit_page(page(left=0.5, right=1.25), SWINTEC)
+    assert (frame.indent, frame.width, frame.shift_in, frame.columns) == (-5, 67, 0.0, 67)
+    assert issues == []
+    assert "against the paper guide (or at 10 on the scale)" in sheet_prompt(
+        PrintOptions.for_profile(SWINTEC, frame), "letter 1")
+
+
+def test_narrower_left_margin_moves_the_sheet_where_backspaces_stop_at_the_margin():
+    frame, issues = fit_page(page(left=0.75, right=1.25), NO_BACKSPACING)
     assert (frame.indent, frame.width, frame.shift_in) == (0, 65, 0.25)
-    assert frame.margins_in(SWINTEC)[0] == pytest.approx(0.75)
+    assert frame.margins_in(NO_BACKSPACING)[0] == pytest.approx(0.75)
     assert messages(issues, I.Level.WARNING) == [
         ("the left margin in Word (¾ in) is narrower than the typewriter's (1 in): "
         "put each sheet ¼ inch to the right of the paper guide (or of 10 on the scale)")]
@@ -63,7 +74,7 @@ def test_narrower_left_margin_moves_the_sheet():
 
 
 def test_the_olympias_paper_guide_is_at_0():
-    olympia = load_profile("olympia-electronic-compact-2")
+    olympia = dataclasses.replace(load_profile("olympia-electronic-compact-2"), left_of_margin=False)
     frame, issues = fit_page(page(left=0.75, right=1.25), olympia)
     assert frame.shift_in == 0.25 and "right of the paper guide (or of 0 on the scale)" in issues[0].message
     frame, _ = fit_page(page(), olympia)
@@ -161,6 +172,23 @@ def test_a_wider_left_margin_starts_lines_further_in(tmp_path, settings):
     cols = {s.x * SWINTEC.pitch_cpi // STEPS_PER_INCH for s in e.sheets[0].strikes}
     assert min(cols) == 15 and max(cols) <= 50
     assert e.events == []
+
+
+def test_a_narrower_left_margin_types_left_of_the_typewriters_margin(tmp_path, settings):
+    """Every pass (text, bold, underline) of every line starts with backspaces,
+    and nothing is typed left of where Word's margin puts it."""
+    m = run(narrow_template(tmp_path / "n.docx", width=8.5, left=0.5), samples.make_data(tmp_path / "d.xlsx"),
+            settings)
+    assert m.ok and (m.frame.indent, m.frame.shift_in) == (-5, 0.0)
+    opts = PrintOptions.for_profile(m.profile, m.frame)
+    e = emulate(m.letters[:2], m.profile, opts)
+    for sheet in e.sheets:
+        cols = {s.x * SWINTEC.pitch_cpi // STEPS_PER_INCH for s in sheet.strikes}
+        assert min(cols) == 5 and max(cols) < SWINTEC.text_end
+    assert e.events == []
+    from daisywriter.render import render_line
+    bold = next(ln for p in m.letters[1].pages for ln in p.lines if any(c.bold for c in ln.cells))
+    assert render_line(bold, m.profile).count(b"\r") >= 1 and b"\r\x08" in render_line(bold, m.profile)
 
 
 def test_left_page_lines_up_on_the_emulator():

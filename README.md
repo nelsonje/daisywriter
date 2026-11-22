@@ -75,8 +75,9 @@ daisywriter feeds to the top margin, types the page, then rolls the sheet out.
 
 The paper size and margins come from the template's page setup in Word (Layout > Size and
 Margins), inside what the typewriter allows: lines end no further than 7.5 inches from the
-paper's left edge, the top margin is at least ⅔ inch, and a left margin under 1 inch means
-putting the sheet that much right of the paper guide (daisywriter says how far).
+paper's left edge and the top margin is at least ⅔ inch. A left margin under 1 inch starts each
+line with backspaces past the typewriter's margin (profiles with `left_of_margin = true`; others ask
+for the sheet to go that much right of the paper guide).
 
 Useful options: `--profile olympia-electronic-compact-2`, `--today 2026-11-08`,
 `--page-numbers after-first --page-number-format "{{LastName}} - Page {page} - {{Today}}"`,

@@ -97,6 +97,7 @@ class Profile:
     load_offset_lines: int = 0  # printing point below the sheet's top edge once it's loaded
     eject_extra_lines: int = 0  # extra feed after the bottom edge reaches the printing point
     paper_guide: int | None = None  # the mark on the paper scale for the sheet's left edge
+    left_of_margin: bool = False  # BS reaches left of the left margin, down to column 0
     unavailable: frozenset[str] = frozenset()
     charset: dict[str, bytes] = field(default_factory=dict)
     raw: dict = field(default_factory=dict, compare=False)
@@ -169,6 +170,7 @@ def _from_toml(pid: str, data: dict) -> Profile:
         load_offset_lines=int(data.get("load_offset_lines", 0)),
         eject_extra_lines=int(data.get("eject_extra_lines", 0)),
         paper_guide=data.get("paper_guide"),
+        left_of_margin=bool(data.get("left_of_margin", False)),
         unavailable=frozenset(data.get("unavailable", "")),
         charset={k: v.encode("latin-1") for k, v in data.get("charset", {}).items()},
         raw=data,

@@ -17,6 +17,10 @@ eject_extra_lines = 5
 # paper scale, for a 1-inch left margin (the carrier starts at 20 on the scale). The prompts
 # mention the mark because the guide is broken on some machines (2026-11-22).
 paper_guide = 10
+# Backspaces after CR move left of the left margin, down to column 0 (the
+# sheet's edge), so a left margin under 1 inch needs no move of the sheet.
+# `testpage left` on the Olympia, 2026-11-22; the Swintec firmware has the same code.
+left_of_margin = true
 
 pitch_cpi = 10
 lines_per_inch = 6

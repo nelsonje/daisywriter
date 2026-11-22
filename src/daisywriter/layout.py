@@ -3,7 +3,7 @@
 Word's own line breaks are ignored: each paragraph is word-wrapped again at the
 profile's pitch and the margins in the template's page setup (frame.py).
 Column 0 of a Line is the typewriter's left margin, so lines start with
-frame.indent blank cells. Line 0 of a Page is the first typed line below the
+frame.indent blank cells (or start left of the margin when it's negative). Line 0 of a Page is the first typed line below the
 top margin.
 """
 from __future__ import annotations
@@ -37,6 +37,7 @@ class Line:
     para: int | None = None  # template paragraph index
     role: Role = Role.OTHER
     raw: bytes | None = None  # typed as is instead of rendering the cells (calibration pages)
+    outdent: int = 0  # the first cell is this many columns left of the typewriter's left margin
 
     @property
     def text(self) -> str:
@@ -388,8 +389,11 @@ def _number_line(text: str, width: int, align: str) -> Line:
 
 
 def _indented(line: Line, indent: int) -> Line:
+    """The line moved right of the left margin (indent > 0) or left of it."""
     if not line.cells:
         return line
+    if indent < 0:
+        return Line(line.cells, line.para, line.role, line.raw, -indent)
     return Line([BLANK] * indent + line.cells, line.para, line.role, line.raw)
 
 

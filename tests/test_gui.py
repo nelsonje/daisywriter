@@ -101,7 +101,7 @@ def test_paper_from_the_template(qtbot, tmp_path, files):
     assert w.paper_label.text() == ("6⅛ × 11 in, margins: left ¾, right 1, top 1, bottom 1 in, "
                                     "43 characters per line")
     assert w.preview.view.stock.width_in == 6.125
-    assert w._options().shift_in == 0.25
+    assert w._options().shift_in == 0.0 and w.merge.frame.indent == -2  # backspaces, not a moved sheet
 
 
 def test_issue_click_selects_its_letter(qtbot, tmp_path, files):

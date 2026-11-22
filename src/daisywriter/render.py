@@ -7,6 +7,8 @@ right letter struck over a wrong one). A bold re-strike pass can run right to
 left (see bold_restrikes); the other marks share left-to-right passes where
 their columns are free. CR returns to the left margin without feeding, and leading
 spaces become carrier moves, so extra passes cost one carriage return each.
+A line that starts left of the margin (Line.outdent) begins each pass with
+backspaces, which the Nakajima firmware takes down to column 0.
 """
 from __future__ import annotations
 
@@ -114,13 +116,25 @@ def _cells(text: str) -> list[Cell]:
     return [Cell(ch) for ch in text]
 
 
+def _from_margin(data: bytes, outdent: int) -> bytes:
+    """A pass that starts outdent columns left of the margin: its leading
+    spaces are used up first, then backspaces take it the rest of the way."""
+    if not outdent:
+        return data
+    lead = len(data) - len(data.lstrip(b" "))
+    if lead >= outdent:
+        return data[outdent:]
+    return BS * (outdent - lead) + data[lead:]
+
+
 def render_line(line: Line, profile: Profile) -> bytes:
     """One printed line, ending with a newline."""
     if line.raw is not None:
         return line.raw + newline(profile)
-    out = _base_pass(line.cells, profile)
+    out = _from_margin(_base_pass(line.cells, profile), line.outdent)
     for way, text in _overprint_passes(line.cells, profile):
-        out += CR + (encode(text, profile) if way == "left" else reverse_pass(_cells(text), profile))
+        typed = encode(text, profile) if way == "left" else reverse_pass(_cells(text), profile)
+        out += CR + _from_margin(typed, line.outdent)
     return out + newline(profile)
 
 

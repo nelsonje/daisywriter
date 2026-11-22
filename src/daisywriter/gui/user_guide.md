@@ -104,8 +104,10 @@ Tables and pictures can't be typed: daisywriter will point them out.
   letter paper, that's a right margin of at least 1 inch.
 - The top margin is at least ⅔ inch: that's where the typewriter holds a sheet
   it has just pulled in.
-- For a left margin under 1 inch, daisywriter asks you to put each sheet a
-  little to the right of the paper guide, and says how far.
+
+A left margin under 1 inch is fine too: each line starts with backspaces, which
+take the typewriter past its own margin, so the sheet still goes against the
+paper guide.
 
 If a margin can't be used as set, daisywriter says so in the box at the
 bottom and uses the nearest one it can. Writing the template in **Courier
