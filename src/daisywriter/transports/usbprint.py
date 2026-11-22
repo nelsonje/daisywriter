@@ -112,10 +112,13 @@ def _message(code: int) -> str:
     return f"{ctypes.FormatError(code).strip()} (Windows error {code})"
 
 
-# What a write or a status read gets once the adapter is gone. Pulling the USB
-# cable in the middle of a page gave ERROR_GEN_FAILURE (2026-11-18).
-GONE = {31: "ERROR_GEN_FAILURE", 433: "ERROR_NO_SUCH_DEVICE", 1167: "ERROR_DEVICE_NOT_CONNECTED",
-        1617: "ERROR_DEVICE_REMOVED"}
+# What a write or a status read on an open handle gets once the adapter is gone.
+# Pulling the USB cable while a write waited gave ERROR_GEN_FAILURE (2026-11-18);
+# a write sent after the cable was out gave ERROR_ACCESS_DENIED (2026-11-22). On an
+# open handle that can only mean the device went away; opening a device another
+# program holds also gives it, but __init__ handles that case itself.
+GONE = {5: "ERROR_ACCESS_DENIED", 31: "ERROR_GEN_FAILURE", 433: "ERROR_NO_SUCH_DEVICE",
+        1167: "ERROR_DEVICE_NOT_CONNECTED", 1617: "ERROR_DEVICE_REMOVED"}
 
 
 def _failure(what: str, code: int) -> TransportError:

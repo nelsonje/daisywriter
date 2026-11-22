@@ -29,6 +29,7 @@ def test_unplugged_adapter_says_so():
     assert str(e) == ("writing failed: the adapter stopped responding: is the USB cable unplugged? "
                       "(Windows error 31)")
     assert "USB cable unplugged" in str(_failure("reading the port status", 1167))
+    assert "USB cable unplugged" in str(_failure("writing", 5))  # a write after the pull, 2026-11-22
 
 
 def test_unplugged_adapter_says_so_with_libusb():
