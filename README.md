@@ -59,7 +59,7 @@ uv run daisywriter preview  samples/letter-template.docx samples/letter-data.xls
 uv run daisywriter preview  samples/letter-template.docx samples/letter-data.xlsx -o preview.html
 uv run daisywriter profiles
 ```
-Printing needs a USB printer-class parallel adapter. On macOS and Linux it needs libusb (e.g. `brew install libusb`); on Windows the built-in USB Printing Support driver is used, so nothing needs installing (no printer has to be set up either):
+Printing needs a USB printer-class parallel adapter: a Prolific PL2305 (067b:2305) or Sabrent's (1a86:7584); `transports/base.ADAPTERS` lists them. On macOS and Linux it needs libusb (e.g. `brew install libusb`); on Windows the built-in USB Printing Support driver is used, so nothing needs installing (no printer has to be set up either):
 ```sh
 uv run daisywriter status                          # is the typewriter connected and on-line? (exit 1 if not)
 uv run daisywriter probe                           # how far ahead of the typewriter the adapter takes data

@@ -7,7 +7,9 @@ spreadsheet.
 
 It works with the **Swintec 1146 CMP**, the **Swintec 1146 CM** and the **Olympia Electronic
 Compact 2**, connected
-to the computer with a USB-to-parallel cable.
+to the computer with a USB-to-parallel cable. Two kinds of cable are known to
+work: those with a Prolific PL2305 chip, and Sabrent's USB-to-parallel printer
+cable.
 
 ## 1. Install daisywriter
 

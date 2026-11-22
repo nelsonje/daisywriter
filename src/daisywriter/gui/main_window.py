@@ -657,19 +657,20 @@ class MainWindow(QMainWindow):
         except TransportError as e:
             self._set_status_light(False, str(e))
             return
+        cable = getattr(t, "name", None)
         try:
             st = t.status()
         finally:
             t.close()
         if st is None:
-            self._set_status_light(True, "connected")
+            self._set_status_light(True, "connected", cable)
         else:
-            self._set_status_light(st.ready, st.explain())
+            self._set_status_light(st.ready, st.explain(), cable)
 
-    def _set_status_light(self, ok: bool, text: str):
+    def _set_status_light(self, ok: bool, text: str, cable: str | None = None):
         color = "#2e7d32" if ok else "#c62828"
         self.status_label.setText(f"<span style='color:{color}'>●</span> {text}")
-        self.status_label.setToolTip(text)
+        self.status_label.setToolTip(f"{cable}: {text}" if cable else text)
 
     # Printing
 

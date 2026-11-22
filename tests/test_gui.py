@@ -331,3 +331,11 @@ def test_open_sample_letters(qtbot, tmp_path):
     (folder / "letter-template.docx").write_bytes(b"changed")
     w.samples_action.trigger()
     assert (folder / "letter-template.docx").read_bytes() == b"changed"
+
+
+def test_check_typewriter_names_the_cable(qtbot, tmp_path, files, fake):
+    w, _ = open_window(qtbot, tmp_path, *files)
+    fake.name = "Sabrent adapter (WCH CH340S) (1a86:7584)"
+    w.check_typewriter()
+    assert w.status_label.text().endswith("ready")
+    assert w.status_label.toolTip() == "Sabrent adapter (WCH CH340S) (1a86:7584): ready"

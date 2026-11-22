@@ -1,6 +1,6 @@
 [project]
 name = "daisywriter"
-version = "0.1.5"
+version = "0.1.6"
 description = "Mail merge from Word and Excel onto daisywheel typewriters"
 readme = "README.md"
 license = "MIT"
