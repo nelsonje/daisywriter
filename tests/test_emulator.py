@@ -232,3 +232,13 @@ def test_swintec_firmwares_differ_where_the_notes_say():
     assert cmp_.charset.get("|") is None and cmp_.can_type("|")  # 335-U: | is a bar
     assert cm.charset["|"] == b"," and cm.charset["¶"] == b"|"  # 3Z28: | prints ¶
     assert cmp_.charset["£"] == b"*" and cm.charset["£"] == b"}"
+
+
+@pytest.mark.parametrize("profile, fits", [(SWINTEC, 66), (OLYMPIA, 65)], ids=["swintec", "olympia"])
+def test_margin_probe_wraps_where_the_paper_did(profile, fits):
+    """testpage margins on paper: the Swintec fits 66 characters, the Olympia 65."""
+    from daisywriter.testpage import ruler
+    assert profile.line_width == fits
+    for n, wraps in ((fits, False), (fits + 1, True)):
+        e = typed(ruler(n).encode() + b"\n", profile)
+        assert any("wrapped" in ev for ev in e.events) == wraps, n

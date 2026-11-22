@@ -51,13 +51,16 @@ folder in your Documents. (They're also on the download page, as
    **single**.
 3. Turn the typewriter **off and on again**. This puts the margins back where
    daisywriter expects them. Don't change the margins.
-4. Press **ON LINE** so its light comes on.
-5. In daisywriter, choose your typewriter in the **Typewriter** list at the top.
+4. Set the **paper guide** (the stop the sheet's left edge rests against) at
+   **0** on the scale on an Olympia, or at **10** on a Swintec. Either way, the
+   letters then start about 1 inch from the left edge of the paper.
+5. Press **ON LINE** so its light comes on.
+6. In daisywriter, choose your typewriter in the **Typewriter** list at the top.
    The model is on the label: a 1146 **CMP** and a 1146 **CM** type some special
    characters (like ½ and §) differently. For an Olympia, the list also asks which
    printwheel it has: Swintec sells replacement wheels, which have • where
    Olympia's has ©. Look on the wheel's hub.
-6. Click **Check typewriter** (bottom left). A green dot and *"ready"* mean
+7. Click **Check typewriter** (bottom left). A green dot and *"ready"* mean
    everything is connected.
 
 ## 3. Write the letter in Word

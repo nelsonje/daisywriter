@@ -19,12 +19,13 @@ eject_extra_lines = 5
 
 pitch_cpi = 10                # slide switch, or ESC P / E / M = 10 / 12 / 15
 lines_per_inch = 6            # slide switch, or ESC 6 / 4 / 3
-# Margins are set on the keyboard (no escape codes). Power-on defaults are 10 and 75.
-margins = { left = 10, right = 75 }
-# Columns kept clear before the right margin; past it the firmware wraps,
-# possibly mid-word. The Swintec (same firmware family) measured 0; keep 1 here
-# until `daisywriter testpage margins` has been run on this machine.
-right_guard = 1
+# Margins are set on the keyboard (no escape codes). Power-on defaults are 10 and
+# 75, but the firmware wraps a character that lands on the right margin, so the
+# last column typed without a wrap is 74: `testpage margins` on the Olympia
+# (2026-11-22) fitted 65 characters and wrapped the 66th. (The Swintec's
+# power-on margins are one column wider at 10 cpi, so it fits 66.)
+margins = { left = 10, right = 74 }
+right_guard = 0
 
 # Phase 2 (output), recorded here so profiles stay complete.
 newline = "\n"                # LF also returns to the left margin on this firmware
