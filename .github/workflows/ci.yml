@@ -134,9 +134,9 @@ jobs:
           app="$mnt/daisywriter.app/Contents/MacOS"
           work=$(mktemp -d)
           "$app/daisywriter-cli" profiles
-          # the bundled libusb loads: no adapter is plugged in, so "not found" (exit 1)
+          # the bundled libusb loads: no adapter is plugged in, so "no USB parallel adapter found" (exit 1)
           "$app/daisywriter-cli" status 2>&1 | tee "$work/status.txt" || true
-          grep -q "not found" "$work/status.txt"
+          grep -q "no USB parallel adapter found" "$work/status.txt"
           "$app/daisywriter-cli" make-samples "$work/s"
           "$app/daisywriter-cli" print "$work/s/letter-template.docx" "$work/s/letter-data.xlsx" \
             --letters 1 -y --typing-errors 3 --emulate "$work/letter.pdf"
