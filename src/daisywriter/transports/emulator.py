@@ -20,7 +20,9 @@ measurements in docs/PLAN.md §16:
   point.
 
 What isn't known is reported rather than guessed: spaces buffered right
-before BS, ESC, SO or SI may be dropped by the firmware.
+before BS, ESC, SI or BEL may be dropped by the firmware. Spaces before SO are
+kept: the charset test page on the Olympia (2026-11-22) typed "³ | © £ ®"
+evenly spaced, each of the last four between SO and SI.
 """
 from __future__ import annotations
 
@@ -34,7 +36,7 @@ UNITS_PER_INCH = 12  # platen: one unit is 1/12 in
 PITCH_STEPS = {ord("P"): 6, ord("E"): 5, ord("F"): 5, ord("M"): 4}  # Olympia ESC E, Swintec ESC F
 LPI_UNITS = {ord("6"): 2, ord("4"): 3, ord("3"): 4}
 SO, SI, ESC = 0x0E, 0x0F, 0x1B
-UNSURE = {"BS", "ESC", "SO", "SI", "BEL"}
+UNSURE = {"BS", "ESC", "SI", "BEL"}  # SO: spaces kept (see above)
 
 
 @dataclass(frozen=True)

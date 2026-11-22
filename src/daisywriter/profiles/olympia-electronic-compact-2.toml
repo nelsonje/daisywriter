@@ -1,16 +1,20 @@
-# Olympia Electronic Compact 2, US 356-U printwheel, built-in parallel port.
-# Character map from ../olympia-compact-electronic-2/FIRMWARE_NOTES.md
-# (derived from the firmware; not yet checked against a printout).
-name = "Olympia Electronic Compact 2 (US 356-U wheel)"
+# Olympia Electronic Compact 2 (firmware 356-U) with Olympia's US printwheel,
+# built-in parallel port. Character map from FIRMWARE_NOTES.md in the
+# olympia-compact-electronic-2 repository. Checked on paper 2026-11-22 with
+# `testpage charset`, on an Olympia fitted with a Swintec wheel: every character
+# matched except ©, which is • on that wheel (see
+# olympia-electronic-compact-2-swintec-wheel.toml).
+name = "Olympia Electronic Compact 2 (Olympia wheel)"
 transport = "usb_printer"
 usb = { vid = 0x067B, pid = 0x2305 }
 paper = "single_sheet"        # or "continuous"
 # Loading a sheet: insert it until the rollers above the printing point catch it.
-# The printing point is then this many lines below the top edge (measured
-# on the Swintec, which shares the mechanism; check with a test page).
+# The printing point is then this many lines below the top edge (measured on
+# the Swintec, which shares the mechanism; the Olympia's first line also landed
+# 1 inch down, 2026-11-22).
 load_offset_lines = 4
 # After the bottom edge reaches the printing point, feed this much more so the
-# sheet clears those rollers.
+# sheet clears those rollers (enough on the Olympia too, 2026-11-22).
 eject_extra_lines = 5
 
 pitch_cpi = 10                # slide switch, or ESC P / E / M = 10 / 12 / 15

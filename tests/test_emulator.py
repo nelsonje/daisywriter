@@ -77,9 +77,11 @@ def test_shift_out_petals_on_the_olympia():
     e = typed(b"a\x0e-/\x0fb\n", OLYMPIA)
     assert [chars[0] for _, chars in sorted(row(e).items())] == ["a", "©", "®", "b"]
     assert e.events == []
-    # spaces before SO are typed only if the firmware keeps the column pointer
+    # spaces before SO are kept (charset page on the Olympia, 2026-11-22)
     e = typed(b"a \x0e-\x0f\n", OLYMPIA)
-    assert any("spaces just before SO" in m for m in e.events)
+    cols = sorted(row(e))
+    assert [row(e)[c][0] for c in cols] == ["a", "©"] and cols[1] - cols[0] == 2
+    assert e.events == []
 
 
 def test_eject_needs_to_clear_the_rollers():

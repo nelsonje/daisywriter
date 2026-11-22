@@ -1,0 +1,56 @@
+# Olympia Electronic Compact 2 (firmware 356-U) fitted with a Swintec
+# replacement printwheel, built-in parallel port. The Swintec wheel matches
+# Olympia's except on three petals (FIRMWARE_NOTES.md in the
+# olympia-compact-electronic-2 repository): 97 is • instead of ©, and 48 and 62
+# are < and > instead of a spare period and comma. The firmware reaches those
+# petals with SO + - * +. Checked on paper 2026-11-22 with `testpage charset`:
+# everything matched the Olympia map, and SO - typed •. The < and > under SO
+# are predicted from the notes and not yet seen on paper.
+name = "Olympia Electronic Compact 2 (Swintec wheel)"
+transport = "usb_printer"
+usb = { vid = 0x067B, pid = 0x2305 }
+paper = "single_sheet"        # or "continuous"
+# Loading a sheet: insert it until the rollers above the printing point catch it.
+# The printing point is then this many lines below the top edge (first line
+# 1 inch down on the Olympia, 2026-11-22).
+load_offset_lines = 4
+# After the bottom edge reaches the printing point, feed this much more so the
+# sheet clears those rollers (enough on the Olympia, 2026-11-22).
+eject_extra_lines = 5
+
+pitch_cpi = 10                # slide switch, or ESC P / E / M = 10 / 12 / 15
+lines_per_inch = 6            # slide switch, or ESC 6 / 4 / 3
+# Margins are set on the keyboard (no escape codes). Power-on defaults are 10 and 75.
+margins = { left = 10, right = 75 }
+# Columns kept clear before the right margin; past it the firmware wraps,
+# possibly mid-word. The Swintec (same firmware family) measured 0; keep 1 here
+# until `daisywriter testpage margins` has been run on this machine.
+right_guard = 1
+
+newline = "\n"                # LF also returns to the left margin on this firmware
+bold = "overstrike"
+underline = "overprint"
+strikethrough = "-"            # overtyped on struck-out text
+line_pause_s = 0.0
+
+# ASCII bytes that print a different glyph on this wheel, so the ASCII
+# character itself can't be typed. < and > are typed under SO instead.
+unavailable = "<>^\\`{|}~"
+
+# Unicode character -> bytes sent. SO (\u000E) ... SI (\u000F) selects the extra petals.
+[charset]
+"±" = "<"
+"°" = ">"
+"¢" = "^"
+"§" = "\\"
+"¶" = "`"
+"½" = "{"
+"¼" = "|"
+"²" = "}"
+"³" = "~"
+"<" = "\u000E*\u000F"
+">" = "\u000E+\u000F"
+"|" = "\u000E,\u000F"
+"•" = "\u000E-\u000F"
+"£" = "\u000E.\u000F"
+"®" = "\u000E/\u000F"
